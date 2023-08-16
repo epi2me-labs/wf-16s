@@ -1,0 +1,3 @@
+barcode,alias,type,extra_col_a,extra_col_b
+barcode01,sample1,test_sample,extra_col_a_1,extra_col_b_1
+barcode02,sample2,positive_control,extra_col_a_2,extra_col_b_2

@@ -1,0 +1,177 @@
+# top-level directory --> take case01
+# `reads0` and `reads1` have their own run IDs and `reads2` has a mixture of
+# both (unordered)
+├── case01
+│   ├── garbage.txt
+│   ├── reads0.fastq
+│   ├── reads1.fastq
+│   └── reads2.fastq
+
+# take dir01, dir02, dir03
+├── case02
+│   ├── dir01
+│   │   ├── garbage.txt
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── dir02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── dir03
+│   │   └── reads0.fastq
+│   └── dir4
+│       └── garbage.txt
+
+# throw error 'Input directory ... cannot contain fastq files and sub-directories.'
+├── case03
+│   ├── extra-reads.fastq
+│   ├── george
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── john
+│   │   ├── reads0.fastq
+│   │   └── reads1.fastq
+│   ├── paul
+│   │   └── reads0.fastq
+│   └── ringo
+│       └── reads1.fastq
+
+# top-level directory --> take case04
+├── case04
+│   ├── reads01.fastq
+│   ├── reads02.fastq.gz
+│   ├── reads03.fq
+│   └── reads03.fq.gz
+
+# take barcode01, barcode02, barcode03
+├── case05
+│   ├── barcode01
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode03
+│   │   └── reads0.fastq
+│   └── sample_sheet.csv
+
+# take barcode01, barcode02 (barcode03 not in sample sheet)
+├── case06
+│   ├── barcode01
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode03
+│   │   └── reads0.fastq
+│   └── sample_sheet.csv
+
+# take barcode01, barcode02, barcode03 (barcode04 in sample sheet but no directory)
+├── case07
+│   ├── barcode01
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode03
+│   │   └── reads0.fastq
+│   └── sample_sheet.csv
+
+# take dir01, dir02, dir03, and unclassified based on the eponymous parameter
+├── case08
+│   ├── dir01
+│   │   ├── garbage.txt
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── dir02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── dir03
+│   │   └── reads0.fastq
+│   └── unclassified
+│       └── reads0.fastq
+
+# take dir01, dir02, dir03 (we allow sub-sub-dirs as long as they don't contain FASTQ files)
+├── case09
+│   ├── dir01
+│   │   ├── garbage.txt
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── dir02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   └── dir03
+│       ├── garbage
+│       │   └── garbage.txt
+│       └── reads0.fastq
+
+# throw error 'Input directory ... cannot contain more than one level of sub-directories with FASTQ files.'
+├── case10
+│   ├── dir01
+│   │   ├── garbage.txt
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── dir02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   └── dir03
+│       ├── garbage
+│       │   ├── garbage.txt
+│       │   └── reads0.fastq
+│       └── reads0.fastq
+
+# throw error 'Invalid sample sheet: values in 'alias' column not unique.'
+├── case11
+│   ├── barcode01
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode02
+│   │   ├── reads0.fastq
+│   │   ├── reads1.fastq
+│   │   └── reads2.fastq
+│   ├── barcode03
+│   │   └── reads0.fastq
+│   └── sample_sheet.csv
+
+# throw error 'Input directory ... must contain either FASTQ files or sub-directories containing FASTQ files.'
+├── case12
+│   ├── barcode01
+│   ├── barcode02
+│   ├── barcode03
+│   └── sample_sheet.csv
+
+# top-level directory --> take case13 (we ignore sub-dirs that don't contain FASTQ files)
+├── case13
+│   ├── garbage
+│   │   └── garbage.txt
+│   ├── reads01.fastq
+│   ├── reads02.fastq.gz
+│   ├── reads03.fq
+│   └── reads04.fq.gz
+
+# more sample sheets for testing sample sheet validation
+├── extra_sample_sheets
+│   ├── sample_sheet_1.csv          # correct
+│   ├── sample_sheet_2.csv          # barcode column missing
+│   ├── sample_sheet_3.csv          # alias column missing
+│   ├── sample_sheet_4.csv          # barcode column not unique
+│   ├── sample_sheet_5.csv          # alias column not unique
+│   ├── sample_sheet_6.csv          # malformed CSV (unequal number of fields)
+│   └── sample_sheet_7.csv          # type column contains disallowed values

@@ -1,0 +1,40 @@
+repos:
+  - repo: local
+    hooks:
+      - id: docs_schema
+        name: docs_schema
+        entry: parse_docs -p docs -e .md -s intro links -oj nextflow_schema.json
+        language: python
+        always_run: true
+        pass_filenames: false
+        additional_dependencies:
+          - epi2melabs
+      - id: docs_readme
+        name: docs_readme
+        entry: parse_docs -p docs -e .md -s header intro quickstart links -ot README.md
+        language: python
+        always_run: true
+        pass_filenames: false
+        additional_dependencies:
+          - epi2melabs
+  - repo: https://github.com/pycqa/flake8
+    rev: 5.0.4
+    hooks:
+      - id: flake8
+        pass_filenames: false
+        additional_dependencies:
+          - flake8-rst-docstrings
+          - flake8-docstrings
+          - flake8-import-order
+          - flake8-forbid-visual-indent
+          - pep8-naming
+          - flake8-no-types
+          - flake8-builtins
+          - flake8-absolute-import
+          - flake8-print
+        args: [
+            "bin",
+            "--import-order-style=google",
+            "--statistics",
+            "--max-line-length=88",
+        ]
