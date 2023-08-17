@@ -1,0 +1,3 @@
+[submodule "wf-metagenomics"]
+	path = wf-metagenomics
+	url = https://github.com/epi2me-labs/wf-metagenomics
