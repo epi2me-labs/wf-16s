@@ -49,20 +49,15 @@ docker-run:
      - if: $MATRIX_NAME == "kraken2"
        variables:
           NF_PROCESS_FILES: "wf-metagenomics/subworkflows/kraken_pipeline.nf"
-          NF_WORKFLOW_OPTS: "--fastq test_data/case01"
+          NF_WORKFLOW_OPTS: "--fastq test_data/case01 --classifier kraken2"
           NF_IGNORE_PROCESSES: "rebatchFastq,stopCondition"
-     - if: $MATRIX_NAME == "batch"
-       variables:
-          NF_PROCESS_FILES: "wf-metagenomics/subworkflows/kraken_pipeline.nf"
-          NF_WORKFLOW_OPTS: "--fastq test_data/case01 --batch_size 1000 --taxonomic_rank G"
-          NF_IGNORE_PROCESSES: "stopCondition"
      - if: $MATRIX_NAME == "minimap2"
        variables:
           NF_PROCESS_FILES: "wf-metagenomics/subworkflows/minimap_pipeline.nf"
-          NF_WORKFLOW_OPTS: "--fastq test_data/case01 --classifier minimap2"
+          NF_WORKFLOW_OPTS: "--fastq test_data/case01"
           NF_IGNORE_PROCESSES: "extractMinimap2Reads"
      - if: $MATRIX_NAME == "minimap2-sample-sheet"
        variables:
           NF_PROCESS_FILES: "wf-metagenomics/subworkflows/minimap_pipeline.nf"
-          NF_WORKFLOW_OPTS: "--fastq test_data/case02 --classifier minimap2 --sample_sheet test_data/case02/sample_sheet.csv --taxonomic_rank G"
+          NF_WORKFLOW_OPTS: "--fastq test_data/case02 --sample_sheet test_data/case02/sample_sheet.csv --taxonomic_rank G"
           NF_IGNORE_PROCESSES: "extractMinimap2Reads"
