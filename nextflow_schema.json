@@ -24,7 +24,7 @@
                 },
                 "classifier": {
                     "type": "string",
-                    "default": "kraken2",
+                    "default": "minimap2",
                     "title": "Classification method",
                     "description": "Kraken2 or Minimap2 workflow to be used for classification of reads.",
                     "enum": [
@@ -107,13 +107,11 @@
                     "type": "string",
                     "default": "ncbi_16s_18s",
                     "title": "Choose a database",
-                    "description": "Sets the reference, databases and taxonomy datasets that will be used for classifying reads. Choices: ['ncbi_16s_18s','ncbi_16s_18s_28s_ITS', 'SILVA_138_1', 'PlusPF-8', 'PlusPFP-8']. Workflow will require memory available to be slightly higher than the size of the database. PlusPF-8 database requires more than 8Gb.",
+                    "description": "Sets the reference, databases and taxonomy datasets that will be used for classifying reads. Choices: ['ncbi_16s_18s','ncbi_16s_18s_28s_ITS', 'SILVA_138_1']. Workflow will require memory available to be slightly higher than the size of the database.",
                     "enum": [
                         "ncbi_16s_18s",
                         "ncbi_16s_18s_28s_ITS",
-                        "SILVA_138_1",
-                        "PlusPF-8",
-                        "PlusPFP-8"
+                        "SILVA_138_1"
                     ],
                     "help_text": "This setting is overridable by providing an explicit taxonomy, database or reference path in the other reference options."
                 },
@@ -160,7 +158,7 @@
                 },
                 "taxonomic_rank": {
                     "type": "string",
-                    "default": "S",
+                    "default": "G",
                     "title": "Taxonomic rank",
                     "description": "Returns results at the taxonomic rank chosen. In the kraken2 pipeline: set the level that bracken will estimate abundance at. Default: S (species). Other possible options are K (kingdom level), P (phylum), C (class), O (order), F (family), and G (genus).",
                     "enum": [
@@ -261,17 +259,20 @@
             "help_text": "Minimap2\nThe default strategy is using minimap2 to perform full\nalignments against .fasta formatted references sequences. "
         },
         "amr_options": {
+            "hidden": true,
             "title": "Antimicrobial Resistance Options",
             "type": "object",
             "fa_icon": "fas fa-pills",
             "properties": {
                 "amr": {
+                    "hidden": true,
                     "type": "boolean",
                     "title": "Enable search for antimicrobial resistance genes (AMR)",
                     "description": "Scan reads for antimicrobial resistance or virulence genes",
                     "help_text": "Reads will be scanned using abricate and the chosen database (`--amr_db`) to identify any acquired antimicrobial resistance or virulence genes found present in the dataset. NOTE: It cannot identify mutational resistance genes"
                 },
                 "amr_db": {
+                    "hidden": true,
                     "type": "string",
                     "default": "resfinder",
                     "title": "AMR database",
@@ -289,6 +290,7 @@
                     ]
                 },
                 "amr_minid": {
+                    "hidden": true,
                     "type": "integer",
                     "default": 80,
                     "minimum": 0,
@@ -297,6 +299,7 @@
                     "description": "Threshold of required identity to report a match between a gene in the database and fastq reads. Valid interval: 0-100"
                 },
                 "amr_mincov": {
+                    "hidden": true,
                     "type": "integer",
                     "default": 80,
                     "minimum": 0,
@@ -329,7 +332,7 @@
             "properties": {
                 "min_len": {
                     "type": "integer",
-                    "default": 0,
+                    "default": 800,
                     "title": "Minimum read length",
                     "description": "Specify read length lower limit.",
                     "help_text": "Any reads shorter than this limit will not be included in the analysis."
@@ -453,7 +456,7 @@
         }
     },
     "docs": {
-        "intro": "## Introduction\n\n`wf-16s` offers two different approaches to assigning sequence reads to a species:\n\n### Kraken2 - Default\n\n[Kraken2](https://github.com/DerrickWood/kraken2) is used with the [Kraken2-server](https://github.com/epi2me-labs/kraken2-server) to offer the fastest method for classification of reads. [Bracken](https://github.com/jenniferlu717/Bracken) is then used to give a good estimate of species level abundance in the sample which can be visualised in the report. The Kraken2 workflow mode can be run in real time. See quickstart below for more details.\n\n### Minimap2 \n\n[Minimap2](https://github.com/lh3/minimap2) provides the finest resolution analysis but, depending on the reference database used, at the expense of significantly more compute time. Currently the minimap2 mode does not support real-time.\n\nThe wf-metagenomics workflow by default uses the NCBI 16S + 18S rRNA database that will be downloaded at the start of an analysis.\n",
+        "intro": "## Introduction\n\n`wf-16s` offers two different approaches to assigning sequence reads to a species:\n\n### Minimap2 - Default\n\n[Minimap2](https://github.com/lh3/minimap2) provides the finest resolution analysis but, depending on the reference database used, at the expense of significantly more compute time. Currently the minimap2 mode does not support real-time.\n\nThe wf-metagenomics workflow by default uses the NCBI 16S + 18S rRNA database that will be downloaded at the start of an analysis.\n\n### Kraken2 \n\n[Kraken2](https://github.com/DerrickWood/kraken2) is used with the [Kraken2-server](https://github.com/epi2me-labs/kraken2-server) to offer the fastest method for classification of reads. [Bracken](https://github.com/jenniferlu717/Bracken) is then used to give a good estimate of species level abundance in the sample which can be visualised in the report. The Kraken2 workflow mode can be run in real time. See quickstart below for more details.\n",
         "links": "## Useful links\n\n* [nextflow](https://www.nextflow.io/)\n* [docker](https://www.docker.com/products/docker-desktop)\n* [singularity](https://docs.sylabs.io/guides/latest/user-guide/)\n"
     }
 }
