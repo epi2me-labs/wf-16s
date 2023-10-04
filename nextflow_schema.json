@@ -46,6 +46,12 @@
                     "title": "Analyse unclassified reads",
                     "description": "Analyse unclassified reads from input directory. By default the workflow will not process reads in the unclassified directory.",
                     "help_text": "If selected and if the input is a multiplex directory the workflow will also process the unclassified directory."
+                },
+                "exclude_host": {
+                    "type": "string",
+                    "format": "path",
+                    "title": "Exclude host reads",
+                    "description": "A FASTA or MMI file of the host reference. Reads that align with this reference will be excluded from the analysis."
                 }
             },
             "allOf": [
@@ -66,6 +72,7 @@
                 "watch_path": {
                     "type": "boolean",
                     "title": "Enable real time processing",
+                    "default": false,
                     "description": "Enable to continuously watch the input directory for new input files. Reads will be analysed as they appear",
                     "help_text": "This option enables the use of Nextflow\u2019s directory watching feature to constantly monitor input directories for new files. As soon as files are written by an external process Nextflow will begin analysing these files. The workflow will accumulate data over time to produce an updating report."
                 },
@@ -220,6 +227,20 @@
                     "title": "Enable memory mapping",
                     "description": "Avoids loading database into RAM",
                     "help_text": "Kraken 2 will by default load the database into process-local RAM; this flag will avoid doing so. It may be useful if the available RAM memory is lower than the size of the chosen database."
+                },
+                "include_kraken2_assignments": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Include kraken2 reads assignments",
+                    "description": "A per sample TSV file that indicates how each input sequence was classified as well as the taxon that has been assigned to each read. The TSV's will only be output on completion of the workflow and therefore not at all if using the real time option whilst running indefinitely.",
+                    "help": "It also includes the taxon that each k-mer mapped back to, if the k-mer was able to be classified."
+                },
+                "kraken2_confidence": {
+                    "type": "number",
+                    "default": 0.0,
+                    "title": "Confidence score threshold",
+                    "description": "Kraken2 Confidence score threshold. Default: 0.0. Valid interval: 0-1",
+                    "help_text": "Apply a threshold to determine if a sequence is classified or unclassified. Please visit the following link for further details about how it works: https://github.com/DerrickWood/kraken2/wiki/Manual#confidence-scoring."
                 }
             },
             "description": "Kraken2 classification options. Only relevant if classifier parameter is set to kraken2"
@@ -245,6 +266,7 @@
                 "split_prefix": {
                     "type": "boolean",
                     "title": "Enable multipart index",
+                    "default": false,
                     "description": "Enable if using a very large reference with minimap2",
                     "help_text": "If reference fasta large enough to require multipart index, set to true to use split-prefix option with minimap2. "
                 },
@@ -253,61 +275,16 @@
                     "title": "Enable keep BAM files",
                     "default": false,
                     "description": "Copy bam files into the output directory."
+                },
+                "minimap2_by_reference": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Compute coverage and sequencing depth of the references.",
+                    "description": "Add a table with the mean sequencing depth per reference, standard deviation and coefficient of variation. It adds a scatterplot of the sequencing depth vs. the coverage and a heatmap showing the depth per percentile to the report"
                 }
             },
             "description": "Minimap2 classification options. Only relevant if classifier parameter is set to minimap2.",
             "help_text": "Minimap2\nThe default strategy is using minimap2 to perform full\nalignments against .fasta formatted references sequences. "
-        },
-        "amr_options": {
-            "hidden": true,
-            "title": "Antimicrobial Resistance Options",
-            "type": "object",
-            "fa_icon": "fas fa-pills",
-            "properties": {
-                "amr": {
-                    "hidden": true,
-                    "type": "boolean",
-                    "title": "Enable search for antimicrobial resistance genes (AMR)",
-                    "description": "Scan reads for antimicrobial resistance or virulence genes",
-                    "help_text": "Reads will be scanned using abricate and the chosen database (`--amr_db`) to identify any acquired antimicrobial resistance or virulence genes found present in the dataset. NOTE: It cannot identify mutational resistance genes"
-                },
-                "amr_db": {
-                    "hidden": true,
-                    "type": "string",
-                    "default": "resfinder",
-                    "title": "AMR database",
-                    "description": "Database of antimicrobial resistance or virulence genes to use.",
-                    "enum": [
-                        "resfinder",
-                        "ecoli_vf",
-                        "plasmidfinder",
-                        "card",
-                        "argannot",
-                        "vfdb",
-                        "ncbi",
-                        "megares",
-                        "ecoh"
-                    ]
-                },
-                "amr_minid": {
-                    "hidden": true,
-                    "type": "integer",
-                    "default": 80,
-                    "minimum": 0,
-                    "maximum": 100,
-                    "title": "AMR identity threshold",
-                    "description": "Threshold of required identity to report a match between a gene in the database and fastq reads. Valid interval: 0-100"
-                },
-                "amr_mincov": {
-                    "hidden": true,
-                    "type": "integer",
-                    "default": 80,
-                    "minimum": 0,
-                    "maximum": 100,
-                    "title": "AMR coverage (breadth-of) threshold",
-                    "description": "Minimum coverage (breadth-of) threshold required to report a match between a gene in the  database and fastq reads. Valid interval: 0-100"
-                }
-            }
         },
         "report_options": {
             "title": "Report Options",
@@ -403,12 +380,14 @@
                 "disable_ping": {
                     "type": "boolean",
                     "title": "Disable ping",
+                    "default": false,
                     "description": "Enable to prevent sending a workflow ping.",
                     "hidden": true
                 },
                 "help": {
                     "type": "boolean",
                     "title": "Display help text",
+                    "default": false,
                     "fa_icon": "fas fa-question-circle",
                     "hidden": true
                 },
@@ -416,6 +395,7 @@
                     "type": "boolean",
                     "title": "Display version",
                     "description": "Display version and exit.",
+                    "default": false,
                     "fa_icon": "fas fa-question-circle",
                     "hidden": true
                 }
@@ -451,9 +431,6 @@
             "$ref": "#/definitions/miscellaneous_options"
         },
         {
-            "$ref": "#/definitions/amr_options"
-        },
-        {
             "$ref": "#/definitions/report_options"
         }
     ],
@@ -480,7 +457,7 @@
         }
     },
     "docs": {
-        "intro": "## Introduction\n\n`wf-16s` offers two different approaches to assigning sequence reads to a species:\n\n### Minimap2 - Default\n\n[Minimap2](https://github.com/lh3/minimap2) provides the finest resolution analysis but, depending on the reference database used, at the expense of significantly more compute time. Currently the minimap2 mode does not support real-time.\n\nThe wf-metagenomics workflow by default uses the NCBI 16S + 18S rRNA database that will be downloaded at the start of an analysis.\n\n### Kraken2 \n\n[Kraken2](https://github.com/DerrickWood/kraken2) is used with the [Kraken2-server](https://github.com/epi2me-labs/kraken2-server) to offer the fastest method for classification of reads. [Bracken](https://github.com/jenniferlu717/Bracken) is then used to give a good estimate of species level abundance in the sample which can be visualised in the report. The Kraken2 workflow mode can be run in real time. See quickstart below for more details.\n",
+        "intro": "## Introduction\n\n`wf-16s` offers two different approaches to assigning sequence reads to a species:\n\n### Minimap2 - Default\n\n[Minimap2](https://github.com/lh3/minimap2) provides the finest resolution analysis but, depending on the reference database used, at the expense of significantly more compute time. Currently the minimap2 mode does not support real-time.\n\nThe wf-16s workflow by default uses the NCBI 16S + 18S rRNA database that will be downloaded at the start of an analysis.\n\n### Kraken2 \n\n[Kraken2](https://github.com/DerrickWood/kraken2) is used with the [Kraken2-server](https://github.com/epi2me-labs/kraken2-server) to offer the fastest method for classification of reads. [Bracken](https://github.com/jenniferlu717/Bracken) is then used to give a good estimate of species level abundance in the sample which can be visualised in the report. The Kraken2 workflow mode can be run in real time. See quickstart below for more details.\n",
         "links": "## Useful links\n\n* [nextflow](https://www.nextflow.io/)\n* [docker](https://www.docker.com/products/docker-desktop)\n* [singularity](https://docs.sylabs.io/guides/latest/user-guide/)\n"
     }
 }
