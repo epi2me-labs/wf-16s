@@ -15,7 +15,7 @@ The kraken2 mode can be used in real-time, allowing the workflow to run continuo
 
 [Minimap2](https://github.com/lh3/minimap2) provides the finest resolution analysis but, depending on the reference database used, at the expense of significantly more compute time. Currently the minimap2 mode does not support real-time.
 
-The wf-metagenomics workflow by default uses the NCBI 16S + 18S rRNA database that will be downloaded at the start of an analysis.
+The wf-16s workflow by default uses the NCBI 16S + 18S rRNA database that will be downloaded at the start of an analysis.
 
 ### Kraken2 
 
@@ -65,6 +65,8 @@ You can run the workflow with test_data available in the github repository using
 
 ```nextflow run epi2me-labs/wf-16s --fastq test_data```
 
+Viewing alignment statistics can be enabled with the `--minimap2_by_reference` flag. Using this option produces a table and scatter plot in the report showing sequencing depth and coverage of each reference. Also in the report will be a heatmap showing the sequencing depth in percetile-windows per reference (for those whose percentage of depth is higher than 0.1%).
+
 ***Kraken2***
 
 You can run the workflow with test_data using kraken2 instead. This mode supports real-time.
@@ -99,6 +101,17 @@ eg.
                                 └── barcode03
                                     └── reads0.fastq
 ```
+**Notes on CPU resource of kraken server and client**
+The kraken2 subworkflow uses a server process to handle kraken2 classification requests. This allows the workflow to persist the sequence database in memory throughout the duration of processing. There are some parameters that may be worth considering to improve the performance of the workflow:
+- `--port`: The option specifies the local network port on which the server and clients will communicate.
+- `--host`: Network hostname (or IP address) for communication between kraken2 server and clients. (See also `external_kraken2` parameter).
+- `--external_kraken2`: Whether a pre-existing kraken2 server should be used, rather than creating one as part of the workflow. By default the workflow assumes that it is running on a single host computer, and further that it should start its own kraken2 server. It may be desirable to start a kraken2 server outside of the workflow (for example to host a large database), in which case this option should be enabled. This option may be used in conjuction with the `host` option to specify that the kraken2 server is running on a remote computer.
+- `--kraken2_memory_mapping`: Kraken 2 will by default load the database into process-local RAM; this flag will avoid doing so. It may be useful if the available RAM memory is lower than the size of the chosen database.
+- `--threads`: Several tasks in this workflow benefit from using multiple CPU threads. This option sets the number of CPU threads for all such processes. The total CPU resource used by the workflow is constrained by the executor configuration. See `server_threads` parameter for kraken specific threads.
+- `--server_threads`: Number of CPU threads used by the kraken2 server for classifying reads.
+- `--kraken_clients`: Number of clients that can connect at once to the kraken-server for classifying reads. It should not be set to more than 4 fewer than the executor CPU limit.
+
+If running the kraken2 pipeline in a cluster, there are two options to enable the workflow to be able to communicate with the kraken_server: 1: Run a kraken_server separately outside of the workflow; 2: Submit the workflow job to run on a single node (so running as if on a local server).
 
 ***Databases***
 
@@ -115,7 +128,15 @@ If you want to run the workflow using your own database, you can use the paramet
 
 ***Output***
 
-The main output of the wf-16s pipeline is the `wf-16s-report.html` which can be found in the output directory. It contains a summary of read statistics, the taxonomic composition of the community and some diversity metrics.
+The main output of the wf-16s pipeline is the `wf-16s-report.html` which can be found in the output directory. It contains a summary of read statistics, the taxonomic composition of the community and some diversity metrics. We have also added a couple of options to customize the results in the report. Use `--abundance_threshold` to remove from the abundance table all the taxa below the threshold. If it is a natural number it removes from the table those taxa with less counts; however to remove those taxa below a percent use a percent expressed as a decimal between 0-1). Furthermore, `--n_taxa_barplot` controls the number of taxa displayed in the bar plot and groups the rest under the category ‘Other’.
+
+There are also other folders within the output folder that contain other output files from the pipeline such as the kraken and bracken reports. Additionally, the ‘species-abundance.tsv’ is a table with the counts of the different taxa per sample. You can use the flag `--include_kraken2_assignments` to include a per sample TSV file that indicates how each input sequence was classified as well as the taxon that has been assigned to each read. This TSV file will only be output on completion of the workflow and therefore not at all if using the real time option whilst running indefinitely. This option is available in the kraken2 pipeline.
+
+***Host depletion***
+
+We have included an optional host filtering step in the pipeline to remove any sequences that map (using minimap2) against a provided reference, which can be a FASTA file or a MMI index. To use this option, just add `--exclude_host` and the path to your host reference. The mapped reads are output in a BAM file and excluded for further analysis.
+
+```nextflow run epi2me-labs/wf-16s --fastq test_data/case04/reads.fastq.gz --exclude_host test_data/case04/host.fasta.gz```
 
 ***Diversity***
 

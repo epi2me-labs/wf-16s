@@ -6,7 +6,7 @@
 
 [Minimap2](https://github.com/lh3/minimap2) provides the finest resolution analysis but, depending on the reference database used, at the expense of significantly more compute time. Currently the minimap2 mode does not support real-time.
 
-The wf-metagenomics workflow by default uses the NCBI 16S + 18S rRNA database that will be downloaded at the start of an analysis.
+The wf-16s workflow by default uses the NCBI 16S + 18S rRNA database that will be downloaded at the start of an analysis.
 
 ### Kraken2 
 
