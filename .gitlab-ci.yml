@@ -6,25 +6,24 @@ include:
 variables:
     # We'll use the single-file case for these runs
     NF_WORKFLOW_OPTS: "--fastq test_data/case01"
-    CI_FLAVOUR: "new"
     PYTEST_CONTAINER_NAME: "wf-metagenomics"
     NF_IGNORE_PROCESSES: "rebatchFastq"
     GIT_SUBMODULE_STRATEGY: recursive
+    CI_FLAVOUR: "new"
+    CWG_AWS_ENV_NAME: "stack"
 
-
-# Remove this block in downstream templates
-singularity-run:
-    tags: [] # no need for big ram
-# end
 
 aws-run:
+    variables:
+        NF_WORKFLOW_OPTS: "--fastq test_data/case01 --store_dir s3://$${XAWS_BUCKET}/${CI_PROJECT_NAME}/store"
+        NF_IGNORE_PROCESSES: "rebatchFastq"
     artifacts:
         when: always
         paths:
             - ${CI_PROJECT_NAME}
             - .nextflow.log
         exclude: [] # give me everything pal
-    allow_failure: true
+    allow_failure: false
 
 
 docker-run:
@@ -41,7 +40,7 @@ docker-run:
     parallel:
         matrix:
             - MATRIX_NAME: [
-                "kraken2", "minimap2", "minimap2-sample-sheet"]
+                "kraken2", "kraken2-real-time", "minimap2", "minimap2-sample-sheet"]
 
     rules:
      - if: ($CI_COMMIT_BRANCH == null || $CI_COMMIT_BRANCH == "dev-template")
@@ -49,8 +48,17 @@ docker-run:
      - if: $MATRIX_NAME == "kraken2"
        variables:
           NF_PROCESS_FILES: "wf-metagenomics/subworkflows/kraken_pipeline.nf"
-          NF_WORKFLOW_OPTS: "--fastq test_data/case01 --classifier kraken2"
-          NF_IGNORE_PROCESSES: "rebatchFastq,stopCondition,concatAssignments"
+          NF_WORKFLOW_OPTS: "--fastq test_data/case01 --classifier kraken2 --include_kraken2_assignments"
+          NF_IGNORE_PROCESSES: ""
+     # In wf-metagenomics, the wf runs indefinitely if there is no condition to stop it.
+     # With the read limit we can stop the wf if the limit is reached.
+     # It creates a STOP.fastq.gz that will be a new input in the wf and make it stop.
+     # Use the creation of this file to test if watch_path is able to detect new input files.
+     - if: $MATRIX_NAME == "kraken2-real-time"
+       variables:
+          NF_PROCESS_FILES: "wf-metagenomics/subworkflows/real_time_pipeline.nf"
+          NF_WORKFLOW_OPTS: "--fastq test_data/case01 --real_time --read_limit 3000 --include_kraken2_assignments --batch_size 1000 --classifier kraken2"
+          NF_IGNORE_PROCESSES: ""
      - if: $MATRIX_NAME == "minimap2"
        variables:
           NF_PROCESS_FILES: "wf-metagenomics/subworkflows/minimap_pipeline.nf"
