@@ -28,7 +28,7 @@ The main options are:
 * `fastq`: A fastq file or directory containing fastq input files or directories of input files.
 * `minimap2`: When set to true will run the analysis with minimap2.
 * `kraken2`: When set to true will run the analysis with Kraken2 and Bracken.
-* `watch_path`: Used to run the workflow in real-time, will continue to watch until a "STOP.fastq" is found.
+* `watch_path`: Used to run the workflow in real-time, will continue to watch until a "STOP.fastq.gz" is found.
 * `read_limit`: Used in combination with watch_path the specify an end point.
 * `kraken2_memory_mapping`: Used to avoid load the database into RAM memory. Available for kraken2 pipeline.
 
@@ -41,19 +41,20 @@ You can run the workflow with test_data available in the github repository using
 
 Viewing alignment statistics can be enabled with the `--minimap2_by_reference` flag. Using this option produces a table and scatter plot in the report showing sequencing depth and coverage of each reference. Also in the report will be a heatmap showing the sequencing depth in percetile-windows per reference (for those whose percentage of depth is higher than 0.1%).
 
+**Taxonomic assignments**    
 ***Kraken2***
 
-You can run the workflow with test_data using kraken2 instead. This mode supports real-time.
+You can run the workflow with he command below that uses test data available from the [github repository](https://github.com/epi2me-labs/wf-16s/tree/master/test_data/case01)
 
-```nextflow run epi2me-labs/wf-16s --fastq test_data --classifier kraken2```
+```nextflow run epi2me-labs/wf-16s --fastq test_data/case01```
 
-Alternatively, you can also run the workflow in real-time, meaning the workflow will watch the input directory(s) and process inputs at they become available in the batch sizes specified.
+You can also run the workflow in real-time, which means it will watch the input directory and process new input files as they become available in batches of the specified size.
 
-```nextflow run epi2me-labs/wf-16s --fastq test_data --classifier kraken2 --watch_path --batch_size 1000```
+```nextflow run epi2me-labs/wf-16s --fastq test_data/case01 --real_time --batch_size 1000```
 
-When using the workflow in real-time, the workflow will run indefinitely until a user interrupts the program (e.g with a ```ctrl+c``` command). The workflow can be configured to complete automatically after a set number of reads have been analysed using the ```read_limit``` variable. Once this threshold has been reached, the program will emit a "STOP.fastq" file into the fastq directory, which will instruct the workflow to complete. The "STOP.fastq" file is then deleted. 
+When using the workflow in real-time, the workflow will run indefinitely until a user interrupts the program (e.g with a ```ctrl+c``` command). The workflow can be configured to complete automatically after a set number of reads have been analysed using the ```read_limit``` variable. Once this threshold has been reached, the program will emit a "STOP.fastq.gz" file into the fastq directory, which will instruct the workflow to complete. The "STOP.fastq.gz" file is then deleted. 
 
-```nextflow run epi2me-labs/wf-16s --fastq test_data --classifier kraken2 --watch_path --read_limit 4000```
+```nextflow run epi2me-labs/wf-16s --fastq test_data/case01 --real_time --read_limit 4000```
 
 **Important Note**
 
@@ -75,8 +76,8 @@ eg.
                                 └── barcode03
                                     └── reads0.fastq
 ```
-**Notes on CPU resource of kraken server and client**
-The kraken2 subworkflow uses a server process to handle kraken2 classification requests. This allows the workflow to persist the sequence database in memory throughout the duration of processing. There are some parameters that may be worth considering to improve the performance of the workflow:
+**Notes on CPU resource of kraken server and client in the real time workflow**
+The real_time subworkflow uses a server process to handle kraken2 classification requests. This allows the workflow to persist the sequence database in memory throughout the duration of processing. There are some parameters that may be worth considering to improve the performance of the workflow:
 - `--port`: The option specifies the local network port on which the server and clients will communicate.
 - `--host`: Network hostname (or IP address) for communication between kraken2 server and clients. (See also `external_kraken2` parameter).
 - `--external_kraken2`: Whether a pre-existing kraken2 server should be used, rather than creating one as part of the workflow. By default the workflow assumes that it is running on a single host computer, and further that it should start its own kraken2 server. It may be desirable to start a kraken2 server outside of the workflow (for example to host a large database), in which case this option should be enabled. This option may be used in conjuction with the `host` option to specify that the kraken2 server is running on a remote computer.
@@ -98,7 +99,9 @@ To analyze  archaeal, bacterial and fungal 16S/18S and ITS data, there are two d
 
 Besides, you can also use the [SILVA] (https://www.arb-silva.de/) database (version 138). Note that in this case, SILVA uses its own taxids, which do not match the NCBI taxids. We provide the respective taxdump files, but if you prefer using the NCBI ones, you can create them from the SILVA files [NCBI] (https://www.arb-silva.de/no_cache/download/archive/current/Exports/taxonomy/ncbi/). As SILVA database uses genus level, the last taxonomic rank at which the analysis is carried out is genus (`--taxonomic_rank G`).
 
-If you want to run the workflow using your own database, you can use the parameters: database_set, taxonomy, database (kraken2) and reference (either a FASTA format reference or a minimap2 MMI format index) and ref2taxid (minimap2). Run `nextflow run main.nf --help` to find out more about them.
+To run wf-16s offline you can use the workflow to download the databases from the internet and prepare them for offline re-use later. If you want to use one of the databases supported out of the box by the workflow, you can run the workflow with your desired database and any input (for example, the test data). The database will be downloaded and prepared in a directory on your computer. Once the database has been prepared, it will be used automatically the next time you run the workflow without needing to be downloaded again. You can find advice on picking a suitable database in our [article on selecting databases for wf-16s](https://labs.epi2me.io/metagenomic-databases/).
+
+If you want to run the workflow using your own kraken2 database, you'll need to provide the database and an associated taxonomy dump. For a custom minimap2 reference database, you'll need to provide a reference FASTA (or MMI) and an associated ref2taxid file. For a guide on how to build and use custom databases, take a look at our [article on how to run wf-metagenomics offline](https://labs.epi2me.io/how-to-meta-offline/).
 
 ***Output***
 
