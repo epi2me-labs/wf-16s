@@ -2,11 +2,24 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/epi2me-labs/wf-16s/master/nextflow_schema.json",
     "title": "epi2me-labs/wf-16s",
-    "description": "Identification of the origin of single reads from targeted amplicon sequencing.",
+    "workflow_title": "16s workflow",
+    "description": "Taxonomic classification of single reads from amplicon-targeted sequencing.",
     "demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-16s/wf-16s-demo.tar.gz",
     "aws_demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-16s/wf-16s-demo/aws.nextflow.config",
     "url": "https://github.com/epi2me-labs/wf-16s",
     "type": "object",
+    "resources": {
+        "recommended": {
+            "cpus": 12,
+            "memory": "32GB"
+        },
+        "minimum": {
+            "cpus": 6,
+            "memory": "16GB"
+        },
+        "run_time": "~40min for 1 million reads in total (24 barcodes) using Minimap2 and the ncbi_16s_18s database.",
+        "arm_support": true
+    },
     "definitions": {
         "input_options": {
             "title": "Input Options",
@@ -18,8 +31,8 @@
                     "type": "string",
                     "format": "path",
                     "title": "FASTQ",
-                    "description": "A fastq file or a directory of directories containing fastq input files.",
-                    "help_text": "If using the kraken2 classifier type, the input must be either a single file or a directory containing sub-directories which themselves contain sequencing reads in fastq files. See Readme for an example.\n\nIf using the minimap2 classifier type - directories named \\\"barcode*\\\" are found under the `--fastq` directory the data is assumed to be multiplex and each barcode directory will be processed independently. If `.fastq(.gz)` files are found under the `--fastq` directory the sample is assumed to not be multiplexed. In this second case `--samples` should be a simple name rather than a CSV file.",
+                    "description": "FASTQ files to use in the analysis.",
+                    "help_text": "This accepts one of three cases: (i) the path to a single FASTQ file; (ii) the path to a top-level directory containing FASTQ files; (iii) the path to a directory containing one level of sub-directories which in turn contain FASTQ files. In the first and second case, a sample name can be supplied with `--sample`. In the last case, the data is assumed to be multiplexed with the names of the sub-directories as barcodes. In this case, a sample sheet can be provided with `--sample_sheet`.",
                     "demo_data": "test_data"
                 },
                 "classifier": {
@@ -31,7 +44,7 @@
                         "kraken2",
                         "minimap2"
                     ],
-                    "help_text": "Use kraken2 for fast classification and minimap2 for more finer resolution, see Readme for further info."
+                    "help_text": "Use Kraken2 for fast classification and minimap2 for finer resolution, see Readme for further info."
                 },
                 "analyse_unclassified": {
                     "type": "boolean",
@@ -86,36 +99,36 @@
                     "type": "integer",
                     "default": 8080,
                     "title": "Network port",
-                    "description": "Network port for communication between kraken2 server and clients (available in real time  pipeline).",
-                    "help_text": "The workflow uses a server process to handle kraken2 classification requests. This allows the workflow to persist the sequence database in memory throughout the duration of processing. The option specifies the local network port on which the server and clients will communicate."
+                    "description": "Network port for communication between Kraken2 server and clients (available in real time  pipeline).",
+                    "help_text": "The workflow uses a server process to handle Kraken2 classification requests. This allows the workflow to persist the sequence database in memory throughout the duration of processing. The option specifies the local network port on which the server and clients will communicate."
                 },
                 "host": {
                     "type": "string",
                     "default": "localhost",
                     "title": "Network hostname (or IP address)",
-                    "description": "Network hostname (or IP address) for communication between kraken2 server and clients. (See also 'external_kraken2' parameter). (Available in real time  pipeline).",
-                    "help_text": "The workflow uses a server process to handle kraken2 classification requests. This allows the workflow to persist the sequence database in memory throughout the duration of processing. The option specifies the local network hostname (or IP address) of the kraken server."
+                    "description": "Network hostname (or IP address) for communication between Kraken2 server and clients. (See also 'external_kraken2' parameter). (Available in real time  pipeline).",
+                    "help_text": "The workflow uses a server process to handle Kraken2 classification requests. This allows the workflow to persist the sequence database in memory throughout the duration of processing. The option specifies the local network hostname (or IP address) of the Kraken server."
                 },
                 "external_kraken2": {
                     "type": "boolean",
                     "default": false,
-                    "title": "External kraken2 server",
-                    "description": "Whether a pre-existing kraken2 server should be used, rather than creating one as part of the workflow. (Available in real time  pipeline).",
-                    "help_text": "By default the workflow assumes that it is running on a single host computer, and further that it should start its own kraken2 server. It may be desirable to start a kraken2 server outside of the workflow, in which case this option should be enabled. This option may be used in conjuction with the `host` option to specify that the kraken2 server is running on a remote computer. "
+                    "title": "External Kraken2 server",
+                    "description": "Whether a pre-existing Kraken2 server should be used, rather than creating one as part of the workflow. (Available in real time  pipeline).",
+                    "help_text": "By default the workflow assumes that it is running on a single host computer, and further that it should start its own Kraken2 server. It may be desirable to start a Kraken2 server outside of the workflow, in which case this option should be enabled. This option may be used in conjunction with the `host` option to specify that the Kraken2 server is running on a remote computer. "
                 },
                 "server_threads": {
                     "type": "integer",
                     "default": 2,
-                    "title": "CPU threads used by the kraken2 server",
-                    "description": "Number of CPU threads used by the kraken2 server for classifying reads. (Available in the real_time pipeline).",
-                    "help_text": "For the real-time kraken2 workflow, this is the number of CPU threads used by the kraken2 server for classifying reads."
+                    "title": "CPU threads used by the Kraken2 server",
+                    "description": "Number of CPU threads used by the Kraken2 server for classifying reads. (Available in the real_time pipeline).",
+                    "help_text": "For the real-time Kraken2 workflow, this is the number of CPU threads used by the Kraken2 server for classifying reads."
                 },
                 "kraken_clients": {
                     "type": "integer",
                     "default": 2,
-                    "title": "Clients used by the kraken2 server",
-                    "description": "Number of clients that can connect at once to the kraken-server for classifying reads. (Available in the real_time pipeline).",
-                    "help_text": "For the real-time kraken2 workflow, this is the number of clients sending reads to the server. It should not be set to more than 4 fewer than the executor CPU limit."
+                    "title": "Clients used by the Kraken2 server",
+                    "description": "Number of clients that can connect at once to the Kraken-server for classifying reads. (Available in the real_time pipeline).",
+                    "help_text": "For the real-time Kraken2 workflow, this is the number of clients sending reads to the server. It should not be set to more than 4 fewer than the executor CPU limit."
                 }
             }
         },
@@ -162,7 +175,7 @@
                     "format": "directory-path",
                     "title": "Store directory name",
                     "description": "Where to store initial download of database.",
-                    "help_text": "The database set selected will be downloaded as part of the workflow and saved in this location. In subsequent runs the workflow will use this as the database.",
+                    "help_text": "database set selected will be downloaded as part of the workflow and saved in this location, on subsequent runs it will use this as the database. ",
                     "hidden": true,
                     "default": "store_dir"
                 },
@@ -170,7 +183,7 @@
                     "type": "string",
                     "format": "path",
                     "title": "Kraken2 database",
-                    "description": "Not required but can be used to specifically override kraken2 database [.tar.gz or Directory].",
+                    "description": "Not required but can be used to specifically override Kraken2 database [.tar.gz or Directory].",
                     "help_text": "By default uses database chosen in database_set parameter."
                 },
                 "taxonomy": {
@@ -203,7 +216,7 @@
                     "type": "string",
                     "default": "G",
                     "title": "Taxonomic rank",
-                    "description": "Returns results at the taxonomic rank chosen. In the kraken2 pipeline: set the level that bracken will estimate abundance at. Default: S (species). Other possible options are K (kingdom level), P (phylum), C (class), O (order), F (family), and G (genus).",
+                    "description": "Returns results at the taxonomic rank chosen. In the Kraken2 pipeline: set the level that Bracken will estimate abundance at. Default: G (genus). Other possible options are K (kingdom level), P (phylum), C (class), O (order), F (family), and S (species).",
                     "enum": [
                         "S",
                         "G",
@@ -220,14 +233,14 @@
             "title": "Kraken2 Options",
             "type": "object",
             "fa_icon": "fas fa-university",
-            "help_text": "\nKraken2\nIt is possible to enable classification by kraken2, \nand disable alignment which is a faster but coarser method of \nclassification reliant on the presence of a kraken2 database.\n",
+            "help_text": "\nKraken2\nIt is possible to enable classification by Kraken2, \nand disable alignment which is a faster but coarser method of \nclassification reliant on the presence of a Kraken2 database.\n",
             "properties": {
                 "bracken_length": {
                     "type": "integer",
                     "title": "Bracken length",
-                    "description": "Set the length value bracken will use",
+                    "description": "Set the length value Bracken will use",
                     "minimum": 1,
-                    "help_text": "Should be set to the length used to generate the kmer distribution file supplied in the kraken database input directory. For the default datasets these will be set automatically. ncbi_16s_18s = 10000 , ncbi_16s_18s_28s_ITS = 1000 , PlusPF-8 = 300"
+                    "help_text": "Should be set to the length used to generate the kmer distribution file supplied in the Kraken database input directory. For the default datasets these will be set automatically. ncbi_16s_18s = 1000 , ncbi_16s_18s_28s_ITS = 1000 , PlusPF-8 = 300"
                 },
                 "kraken2_memory_mapping": {
                     "type": "boolean",
@@ -239,7 +252,7 @@
                 "include_kraken2_assignments": {
                     "type": "boolean",
                     "default": false,
-                    "title": "Include kraken2 reads assignments",
+                    "title": "Include Kraken2 reads assignments",
                     "description": "A per sample TSV file that indicates how each input sequence was classified as well as the taxon that has been assigned to each read. The TSV's will only be output on completion of the workflow and therefore not at all if using the real time option whilst running indefinitely.",
                     "help": "It also includes the taxon that each k-mer mapped back to, if the k-mer was able to be classified."
                 },
@@ -350,49 +363,47 @@
                 },
                 "max_len": {
                     "type": "integer",
-                    "default": 2000,
                     "title": "Maximum read length",
+                    "default": 2000,
                     "description": "Specify read length upper limit",
                     "help_text": "Any reads longer than this limit will not be included in the analysis."
                 },
                 "threads": {
                     "type": "integer",
-                    "default": 2,
+                    "default": 4,
                     "title": "Maximum number of CPU threads",
                     "description": "Maximum number of CPU threads to use per workflow task.",
-                    "help_text": "Several tasks in this workflow benefit from using multiple CPU threads. This option sets the number of CPU threads for all such processes. The total CPU resource used by the workflow is constrained by the executor configuration. See server threads parameter for kraken specific threads in the real_time pipeline."
+                    "help_text": "Several tasks in this workflow benefit from using multiple CPU threads. This option sets the number of CPU threads for all such processes. The total CPU resource used by the workflow is constrained by the executor configuration. See server threads parameter for Kraken specific threads in the real_time pipeline."
                 }
             }
         },
         "miscellaneous_options": {
             "title": "Miscellaneous Options",
             "type": "object",
-            "fa_icon": "fas fa-file-import",
+            "default": "",
             "description": "Everything else.",
             "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
             "properties": {
                 "disable_ping": {
                     "type": "boolean",
-                    "title": "Disable ping",
                     "default": false,
-                    "description": "Enable to prevent sending a workflow ping.",
-                    "hidden": true
+                    "description": "Enable to prevent sending a workflow ping."
                 },
                 "help": {
                     "type": "boolean",
-                    "title": "Display help text",
-                    "default": false,
+                    "description": "Display help text.",
                     "fa_icon": "fas fa-question-circle",
+                    "default": false,
                     "hidden": true
                 },
                 "version": {
                     "type": "boolean",
-                    "title": "Display version",
-                    "default": false,
                     "description": "Display version and exit.",
                     "fa_icon": "fas fa-question-circle",
+                    "default": false,
                     "hidden": true
                 }
+
             }
         }
     },
@@ -449,9 +460,5 @@
         "show_hidden_params": {
             "type": "boolean"
         }
-    },
-    "docs": {
-        "intro": "## Introduction\n\n`wf-16s` offers two different approaches to assigning sequence reads to a species:\n\n### Minimap2 - Default\n\n[Minimap2](https://github.com/lh3/minimap2) provides the finest resolution analysis but, depending on the reference database used, at the expense of significantly more compute time. Currently the minimap2 mode does not support real-time.\n\nThe wf-16s workflow by default uses the NCBI 16S + 18S rRNA database that will be downloaded at the start of an analysis.\n\n### Kraken2 \n\n[Kraken2](https://github.com/DerrickWood/kraken2) is used with the [Kraken2-server](https://github.com/epi2me-labs/kraken2-server) to offer the fastest method for classification of reads. [Bracken](https://github.com/jenniferlu717/Bracken) is then used to give a good estimate of species level abundance in the sample which can be visualised in the report. The Kraken2 workflow mode can be run in real time. See quickstart below for more details.\n",
-        "links": "## Useful links\n\n* [nextflow](https://www.nextflow.io/)\n* [docker](https://www.docker.com/products/docker-desktop)\n* [singularity](https://docs.sylabs.io/guides/latest/user-guide/)\n* [wf-metagenomics](https://github.com/epi2me-labs/wf-metagenomics)"
     }
 }
