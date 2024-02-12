@@ -40,7 +40,8 @@ docker-run:
     parallel:
         matrix:
             - MATRIX_NAME: [
-                "kraken2", "kraken2-real-time", "minimap2", "minimap2-sample-sheet"]
+                "kraken2", "kraken2-real-time", "minimap2", "minimap2-sample-sheet",
+                "kraken2-bam", "minimap2-bam"]
 
     rules:
      - if: ($CI_COMMIT_BRANCH == null || $CI_COMMIT_BRANCH == "dev-template")
@@ -69,3 +70,16 @@ docker-run:
           NF_PROCESS_FILES: "wf-metagenomics/subworkflows/minimap_pipeline.nf"
           NF_WORKFLOW_OPTS: "--fastq test_data/case02 --sample_sheet test_data/case02/sample_sheet.csv --taxonomic_rank G --n_taxa_barplot 5 --abundance_threshold 1"
           NF_IGNORE_PROCESSES: "extractMinimap2Reads,getAlignmentStats"
+    # BAM INGRESS
+     # Compare counts with case01_no_duplicateIDs, must be the same
+     - if: $MATRIX_NAME == "kraken2-bam"
+       variables:
+          NF_PROCESS_FILES: "wf-metagenomics/subworkflows/kraken_pipeline.nf"
+          NF_WORKFLOW_OPTS: "--bam test_data/case05_bam --include_kraken2_assignments --abundance_threshold 1 --classifier kraken2"
+          NF_IGNORE_PROCESSES: ""
+     ## Regular test minimap2 - mapping stats
+     - if: $MATRIX_NAME == "minimap2-bam"
+       variables:
+          NF_PROCESS_FILES: "wf-metagenomics/subworkflows/minimap_pipeline.nf"
+          NF_WORKFLOW_OPTS: "--bam test_data/case05_bam --minimap2_by_reference --database_set ncbi_16s_18s --classifier minimap2"
+          NF_IGNORE_PROCESSES: "extractMinimap2Reads"   
