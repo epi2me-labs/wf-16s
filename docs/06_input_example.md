@@ -14,3 +14,4 @@ input_reads.fastq   ─── input_directory  ─── input_directory
                                              │   └── reads2.fastq
                                              └── barcode03
                                               └── reads0.fastq
+```
