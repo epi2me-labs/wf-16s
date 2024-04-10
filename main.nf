@@ -100,12 +100,25 @@ workflow {
                 "sample":params.sample,
                 "sample_sheet":params.sample_sheet,
                 "analyse_unclassified":params.analyse_unclassified,
+                "return_fastq": true,
                 "keep_unaligned": params.wf.keep_unaligned,
                 "stats": params.wf.stats,
                 "watch_path": params.real_time
             ])
     }
 
+    // Discard empty samples
+    log.info(
+        "Note: Empty files or those files whose reads have been discarded after filtering based on " +
+        "read length and/or read quality will not appear in the report and will be excluded from subsequent analysis.")
+    samples = samples
+    | filter { meta, seqs, stats ->
+        valid = meta['n_seqs'] > 0
+        if (!valid) {
+            log.warn "Found empty file for sample '${meta["alias"]}'."
+        }
+        valid
+    }
     // Call the proper pipeline
     if ("${params.classifier}" == "minimap2") {
         log.info("Minimap2 pipeline.")
