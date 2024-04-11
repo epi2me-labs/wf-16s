@@ -5,7 +5,7 @@ include:
 
 variables:
     NF_BEFORE_SCRIPT: mkdir -p ${CI_PROJECT_NAME}/data/ && wget -O ${CI_PROJECT_NAME}/data/wf-16s-demo.tar.gz https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-16s/wf-16s-demo.tar.gz && tar -xzvf ${CI_PROJECT_NAME}/data/wf-16s-demo.tar.gz -C ${CI_PROJECT_NAME}/data/
-    NF_WORKFLOW_OPTS: "--fastq ${CI_PROJECT_NAME}/data/demo_data/test_data
+    NF_WORKFLOW_OPTS: "--fastq ${CI_PROJECT_NAME}/data/wf-16s-demo/test_data/
     --classifier minimap2
     --minimap2_by_reference
     --database_set ncbi_16s_18s"
