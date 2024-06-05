@@ -65,7 +65,7 @@ docker-run:
      - if: $MATRIX_NAME == "minimap2"
        variables:
           NF_PROCESS_FILES: "wf-metagenomics/subworkflows/minimap_pipeline.nf"
-          NF_WORKFLOW_OPTS: "--fastq test_data/case01 --minimap2_by_reference"
+          NF_WORKFLOW_OPTS: "--fastq test_data/case01 --minimap2_by_reference --keep_bam"
           NF_IGNORE_PROCESSES: "extractMinimap2Reads"
      - if: $MATRIX_NAME == "minimap2-sample-sheet"
        variables:

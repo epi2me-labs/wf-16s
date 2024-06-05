@@ -61,7 +61,7 @@
                 },
                 "exclude_host": {
                     "type": "string",
-                    "format": "path",
+                    "format": "file-path",
                     "title": "Exclude host reads",
                     "description": "A FASTA or MMI file of the host reference. Reads that align with this reference will be excluded from the analysis."
                 }
@@ -305,7 +305,7 @@
                     "type": "boolean",
                     "title": "Enable keep BAM files",
                     "default": false,
-                    "description": "Copy bam files into the output directory."
+                    "description": "Copy bam files into the output directory. It also creates the configuration and reduced reference files needed to load the alignments in IGV."
                 },
                 "minimap2_by_reference": {
                     "type": "boolean",
@@ -343,7 +343,7 @@
                     "default": 1,
                     "title": "Abundance threshold",
                     "description": "Remove those taxa whose abundance is equal or lower than the chosen value.",
-                    "help_text": "To remove taxa with abundances lower than or equal to a relative value (compared to the total number of reads), use a decimal between 0-1 (1 not inclusive). To remove taxa with abundances lower than or equal to an absolute value, provide a number larger than 1."
+                    "help_text": "To remove taxa with abundances lower than or equal to a relative value (compared to the total number of reads) use a decimal between 0-1 (1 not inclusive). To remove taxa with abundances lower than or equal to an absolute value, provide a number larger or equal to 1."
                 },
                 "n_taxa_barplot": {
                     "type": "integer",
@@ -397,9 +397,9 @@
                 "threads": {
                     "type": "integer",
                     "default": 4,
-                    "title": "Maximum number of CPU threads",
-                    "description": "Maximum number of CPU threads to use per workflow task.",
-                    "help_text": "Several tasks in this workflow benefit from using multiple CPU threads. This option sets the number of CPU threads for all such processes. The total CPU resource used by the workflow is constrained by the executor configuration. See server threads parameter for Kraken specific threads in the real_time pipeline."
+                    "title": "Number of CPU threads per workflow task",
+                    "description": "Maximum number of CPU threads to use in each parallel workflow task.",
+                    "help_text": "Several tasks in this workflow benefit from using multiple CPU threads. This option sets the number of CPU threads for all such processes. See server threads parameter for Kraken specific threads in the real_time pipeline."
                 }
             }
         },

@@ -26,6 +26,8 @@ nextflow run epi2me-labs/wf-16s --fastq test_data/case01 --classifier minimap2
 
 The creation of alignment statistics plots can be enabled with the `minimap2_by_reference` flag. Using this option produces a table and scatter plot in the report showing sequencing depth and coverage of each reference. The report also contains a heatmap indicating the sequencing depth over relative genomic coordinates for the references with the highest coverage (references with a mean coverage of less than 1% of the one with the largest value are omitted).
 
+In addition, the user can output BAM files in a folder called `bams` by using the option `keep_bam`. If the user provides a custom database, the workflow will also output the references with reads mappings, as well as an IGV configuration file. This configuration file allows the user to view the alignments in the EPI2ME Desktop Application in the Viewer tab. Note that the number of references can be reduced using the `abundance_threshold` option, which will select those references with a number of reads aligned higher than this value. Please consider that the view of the alignment is highly dependent on the reference selected.
+
 #### 3.2 Using Kraken2
 
 [Kraken2](https://github.com/DerrickWood/kraken2) provides the fastest method for the taxonomic classification of the reads. Then, [Bracken](https://github.com/jenniferlu717/Bracken) is used to provide an estimate of the species (or the selected taxonomic rank) abundance in the sample.
@@ -73,7 +75,7 @@ There are three types of biodiversity measures described over a special scale <s
 * Beta-diversity defined as variation in the identities of species among sites, provides a direct link between biodiversity at local scales (alpha diversity) and the broader regional species pool (gamma diversity).
 * Gamma-diversity is the total observed richness within an entire region.
 
-To provide a quick overview of the alpha-diversity of the microbial community, we provide some of the most common diversity metrics calculated for a specific taxonomic rank <sup>[3](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4224527/)</sup>, which can be chosen by the user with the `taxonomic_rank` parameter ('D'=Domain,'P'=Phylum, 'C'=Class, 'O'=Order, 'F'=Family, 'G'=Genus, 'S'=Species). By default, the rank is 'S' (species-level). Some of the included alpha diversity metrics are:
+To provide a quick overview of the alpha-diversity of the microbial community, we provide some of the most common diversity metrics calculated for a specific taxonomic rank <sup>[3](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4224527/)</sup>, which can be chosen by the user with the `taxonomic_rank` parameter ('D'=Domain,'P'=Phylum, 'C'=Class, 'O'=Order, 'F'=Family, 'G'=Genus, 'S'=Species). By default, the rank is 'G' (genus-level). Some of the included alpha diversity metrics are:
 
 * Shannon Diversity Index (H): Shannon entropy approaches zero if a community is almost entirely made up of a single taxon.
 

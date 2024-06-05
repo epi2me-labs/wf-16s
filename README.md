@@ -177,7 +177,7 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 | minimap2filter | string | Filter output of minimap2 by taxids inc. child nodes, E.g. "9606,1404" | Provide a list of taxids if you are only interested in certain ones in your minimap2 analysis outputs. |  |
 | minimap2exclude | boolean | Invert minimap2filter and exclude the given taxids instead | Exclude a list of taxids from analysis outputs. | False |
 | split_prefix | boolean | Enable if using a very large reference with minimap2 | If reference fasta large enough to require multipart index, set to true to use split-prefix option with minimap2.  | False |
-| keep_bam | boolean | Copy bam files into the output directory. |  | False |
+| keep_bam | boolean | Copy bam files into the output directory. It also creates the configuration and reduced reference files needed to load the alignments in IGV. |  | False |
 | minimap2_by_reference | boolean | Add a table with the mean sequencing depth per reference, standard deviation and coefficient of variation. It adds a scatterplot of the sequencing depth vs. the coverage and a heatmap showing the depth per percentile to the report |  | False |
 | min_percent_identity | number | Minimum percentage of identity with the matched reference to define a sequence as classified; sequences with a value lower than this are defined as unclassified. |  | 95 |
 | min_ref_coverage | number | Minimum coverage value to define a sequence as classified; sequences with a coverage value lower than this are defined as unclassified. Use this option if you expect reads whose lengths are similar to the references' lengths. |  | 90 |
@@ -187,7 +187,7 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
-| abundance_threshold | number | Remove those taxa whose abundance is equal or lower than the chosen value. | To remove taxa with abundances lower than or equal to a relative value (compared to the total number of reads), use a decimal between 0-1 (1 not inclusive). To remove taxa with abundances lower than or equal to an absolute value, provide a number larger than 1. | 1 |
+| abundance_threshold | number | Remove those taxa whose abundance is equal or lower than the chosen value. | To remove taxa with abundances lower than or equal to a relative value (compared to the total number of reads) use a decimal between 0-1 (1 not inclusive). To remove taxa with abundances lower than or equal to an absolute value, provide a number larger or equal to 1. | 1 |
 | n_taxa_barplot | integer | Number of most abundance taxa to be displayed in the barplot. The rest of taxa will be grouped under the "Other" category. |  | 9 |
 
 
@@ -205,7 +205,7 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 | min_len | integer | Specify read length lower limit. | Any reads shorter than this limit will not be included in the analysis. | 800 |
 | min_read_qual | number | Specify read quality lower limit. | Any reads with a quality lower than this limit will not be included in the analysis. |  |
 | max_len | integer | Specify read length upper limit | Any reads longer than this limit will not be included in the analysis. | 2000 |
-| threads | integer | Maximum number of CPU threads to use per workflow task. | Several tasks in this workflow benefit from using multiple CPU threads. This option sets the number of CPU threads for all such processes. The total CPU resource used by the workflow is constrained by the executor configuration. See server threads parameter for Kraken specific threads in the real_time pipeline. | 4 |
+| threads | integer | Maximum number of CPU threads to use in each parallel workflow task. | Several tasks in this workflow benefit from using multiple CPU threads. This option sets the number of CPU threads for all such processes. See server threads parameter for Kraken specific threads in the real_time pipeline. | 4 |
 
 
 
@@ -229,6 +229,10 @@ Output files may be aggregated including information for all samples or provided
 | BAM index file (minimap2) | ./bams/{{ alias }}.reference.bam.bai | Index file generated from mapping filtered input reads to the reference. | per-sample |
 | BAM flagstat (minimap2) | ./bams/{{ alias }}.bamstats_results/bamstats.flagstat.tsv | Mapping results per reference | per-sample |
 | Minimap2 alignment statistics (minimap2) | ./bams/{{ alias }}.bamstats_results/bamstats.readstats.tsv.gz | Per read stats after aligning | per-sample |
+| Reduced reference FASTA file | ./igv_reference/reduced_reference.fasta.gz | Reference FASTA file containing only those sequences that have reads mapped against them. | aggregated |
+| Index of the reduced reference FASTA file | ./igv_reference/reduced_reference.fasta.gz.fai | Index of the reference FASTA file containing only those sequences that have reads mapped against them. | aggregated |
+| GZI index of the reduced reference FASTA file | ./igv_reference/reduced_reference.fasta.gz.gzi | Index of the reference FASTA file containing only those sequences that have reads mapped against them. | aggregated |
+| JSON configuration file for IGV browser | ./igv.json | JSON configuration file to be loaded in IGV for visualising alignments against the reduced reference. | aggregated |
 
 
 
@@ -262,6 +266,8 @@ nextflow run epi2me-labs/wf-16s --fastq test_data/case01 --classifier minimap2
 ```
 
 The creation of alignment statistics plots can be enabled with the `minimap2_by_reference` flag. Using this option produces a table and scatter plot in the report showing sequencing depth and coverage of each reference. The report also contains a heatmap indicating the sequencing depth over relative genomic coordinates for the references with the highest coverage (references with a mean coverage of less than 1% of the one with the largest value are omitted).
+
+In addition, the user can output BAM files in a folder called `bams` by using the option `keep_bam`. If the user provides a custom database, the workflow will also output the references with reads mappings, as well as an IGV configuration file. This configuration file allows the user to view the alignments in the EPI2ME Desktop Application in the Viewer tab. Note that the number of references can be reduced using the `abundance_threshold` option, which will select those references with a number of reads aligned higher than this value. Please consider that the view of the alignment is highly dependent on the reference selected.
 
 #### 3.2 Using Kraken2
 
@@ -310,7 +316,7 @@ There are three types of biodiversity measures described over a special scale <s
 * Beta-diversity defined as variation in the identities of species among sites, provides a direct link between biodiversity at local scales (alpha diversity) and the broader regional species pool (gamma diversity).
 * Gamma-diversity is the total observed richness within an entire region.
 
-To provide a quick overview of the alpha-diversity of the microbial community, we provide some of the most common diversity metrics calculated for a specific taxonomic rank <sup>[3](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4224527/)</sup>, which can be chosen by the user with the `taxonomic_rank` parameter ('D'=Domain,'P'=Phylum, 'C'=Class, 'O'=Order, 'F'=Family, 'G'=Genus, 'S'=Species). By default, the rank is 'S' (species-level). Some of the included alpha diversity metrics are:
+To provide a quick overview of the alpha-diversity of the microbial community, we provide some of the most common diversity metrics calculated for a specific taxonomic rank <sup>[3](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4224527/)</sup>, which can be chosen by the user with the `taxonomic_rank` parameter ('D'=Domain,'P'=Phylum, 'C'=Class, 'O'=Order, 'F'=Family, 'G'=Genus, 'S'=Species). By default, the rank is 'G' (genus-level). Some of the included alpha diversity metrics are:
 
 * Shannon Diversity Index (H): Shannon entropy approaches zero if a community is almost entirely made up of a single taxon.
 

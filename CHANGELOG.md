@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.2.0]
+### Added
+- Output IGV configuration file if the `keep_bam` option is enabled and a custom reference is provided (in minimap2 mode).
+- Output reduced reference file if the `keep_bam` option is enabled (in minimap2 mode).
+- `abundance_threshold` reduces the number of references to be displayed in IGV.
+### Fixed
+- `exclude-host` can input a file in the EPI2ME Desktop Application.
+### Changed
+- Bump to wf-metagenomics v2.10.0
+
 ## [v1.1.3]
 ### Added
 - Reads below percentages of identity (`min_percent_identity`) and the reference covered (`min_ref_coverage`) are considered as unclassified in the minimap2 approach.
