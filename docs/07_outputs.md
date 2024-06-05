@@ -13,3 +13,7 @@ Output files may be aggregated including information for all samples or provided
 | BAM index file (minimap2) | ./bams/{{ alias }}.reference.bam.bai | Index file generated from mapping filtered input reads to the reference. | per-sample |
 | BAM flagstat (minimap2) | ./bams/{{ alias }}.bamstats_results/bamstats.flagstat.tsv | Mapping results per reference | per-sample |
 | Minimap2 alignment statistics (minimap2) | ./bams/{{ alias }}.bamstats_results/bamstats.readstats.tsv.gz | Per read stats after aligning | per-sample |
+| Reduced reference FASTA file | ./igv_reference/reduced_reference.fasta.gz | Reference FASTA file containing only those sequences that have reads mapped against them. | aggregated |
+| Index of the reduced reference FASTA file | ./igv_reference/reduced_reference.fasta.gz.fai | Index of the reference FASTA file containing only those sequences that have reads mapped against them. | aggregated |
+| GZI index of the reduced reference FASTA file | ./igv_reference/reduced_reference.fasta.gz.gzi | Index of the reference FASTA file containing only those sequences that have reads mapped against them. | aggregated |
+| JSON configuration file for IGV browser | ./igv.json | JSON configuration file to be loaded in IGV for visualising alignments against the reduced reference. | aggregated |
