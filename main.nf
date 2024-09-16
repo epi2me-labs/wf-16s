@@ -13,7 +13,6 @@ include { prepare_databases } from "./wf-metagenomics/modules/local/databases.nf
 
 nextflow.preview.recursion=true
 
-
 // entrypoint workflow
 WorkflowMain.initialise(workflow, params, log)
 workflow {
@@ -34,11 +33,15 @@ workflow {
     if (params.max_len) { fastcat_extra_args << "-b $params.max_len" }
     if (params.min_read_qual) { fastcat_extra_args << "-q $params.min_read_qual" }
     // If BAM files are output, keep runIDs in case they are reused in the wf to track them.
-    if (params.keep_bam) {fastcat_extra_args << "-H"}
+    boolean keep_bam = (params.keep_bam || params.igv)
+    if (keep_bam) {fastcat_extra_args << "-H"}
 
     // Check source param is valid
     sources = params.database_sets
-    
+    if (params.containsKey('include_kraken2_assignments')){
+        throw new Exception("`include_kraken2_assignments` is now deprecated in favour of `include_read_assignments`.")
+    }
+
     // Stop the pipeline in case not valid parameters combinations
     if (params.classifier == 'minimap2' && params.database) {
         throw new Exception("To use minimap2 with your custom database, you need to use `--reference` (instead of `--database`) and `--ref2taxid`.")
@@ -49,8 +52,8 @@ workflow {
     if (params.classifier != 'kraken2' && params.real_time) {
         throw new Exception("Real time subworkflow must use kraken2 classifier.")
     }
-    
-// If user provides each database, set to 'custom' the params.database_set
+
+    // If user provides each database, set to 'custom' the params.database_set
     if (params.reference || params.database) {
         source_name = 'custom'
         // distinguish between taxonomy and database to be able to use taxonomy default db in some cases.
@@ -80,7 +83,7 @@ workflow {
             throw new Exception("Source $params.database_set is invalid, must be one of $keys")
         }
     }
-    
+
     // Input data
     // real time wf still requires per-read-stats as it computes its own aggregated statistics
     // TODO: investigate chunk option for real time and use of histograms
@@ -110,6 +113,7 @@ workflow {
                 "per_read_stats": params.real_time ? true : false
             ])
     }
+    
 
     // Discard empty samples
     log.info(
@@ -123,23 +127,35 @@ workflow {
         }
         valid
     }
+
+    // Set minimap2 common options
+    ArrayList common_minimap2_opts = [
+        "-ax map-ont",
+        "--cap-kalloc 100m",
+        "--cap-sw-mem 50m",
+    ]
+
     // Call the proper pipeline
     if ("${params.classifier}" == "minimap2") {
         log.info("Minimap2 pipeline.")
-            database = null
-            kmer_dist = null
-            databases_minimap2 = prepare_databases(
-                source_data_taxonomy,
-                source_data_database
+        database = null
+        kmer_dist = null
+        if (keep_bam) {
+            common_minimap2_opts = common_minimap2_opts + ["-y"]
+        }
+        databases_minimap2 = prepare_databases(
+            source_data_taxonomy,
+            source_data_database
+        )
+        results = minimap_pipeline(
+            samples,
+            databases_minimap2.reference,
+            databases_minimap2.ref2taxid,
+            databases_minimap2.taxonomy,
+            databases_minimap2.taxonomic_rank,
+            common_minimap2_opts,
+            keep_bam
             )
-
-            results = minimap_pipeline(
-                samples,
-                databases_minimap2.reference,
-                databases_minimap2.ref2taxid,
-                databases_minimap2.taxonomy,
-                databases_minimap2.taxonomic_rank
-                )
     }
 
     // Handle getting kraken2 database files if kraken2 classifier selected
@@ -172,19 +188,21 @@ workflow {
                 databases_kraken2.taxonomy,
                 databases_kraken2.database,
                 databases_kraken2.bracken_length,
-                databases_kraken2.taxonomic_rank)
+                databases_kraken2.taxonomic_rank,
+                common_minimap2_opts
+            )
         } else {
             results = kraken_pipeline(
                 samples,
                 databases_kraken2.taxonomy,
                 databases_kraken2.database,
                 databases_kraken2.bracken_length,
-                databases_kraken2.taxonomic_rank
+                databases_kraken2.taxonomic_rank,
+                common_minimap2_opts
             )
         }
 
     }
-
 }
 
 workflow.onComplete {

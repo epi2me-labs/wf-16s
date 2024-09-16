@@ -44,40 +44,62 @@ ARM processor support: True
 
 ## Install and run
 
-These are instructions to install and run the workflow on command line. You can also access the workflow via the [EPI2ME application](https://labs.epi2me.io/downloads/).  
 
-The workflow uses [nextflow](https://www.nextflow.io/) to manage compute and software resources. Therefore, nextflow will need to be installed before attempting to run the workflow. 
+These are instructions to install and run the workflow on command line.
+You can also access the workflow via the
+[EPI2ME Desktop application](https://labs.epi2me.io/downloads/).
 
-The workflow can currently be run using either [Docker](https://www.docker.com/products/docker-desktop) or
-[Singularity](https://docs.sylabs.io/guides/3.0/user-guide/index.html) to provide isolation of 
-the required software. Both methods are automated out-of-the-box provided 
-either Docker or Singularity is installed. This is controlled by the [`-profile`](https://www.nextflow.io/docs/latest/config.html#config-profiles) parameter as exemplified in the example below. 
+The workflow uses [Nextflow](https://www.nextflow.io/) to manage
+compute and software resources,
+therefore Nextflow will need to be
+installed before attempting to run the workflow.
 
-It is not required to clone or download the git repository in order to run the workflow. 
-More information on running EPI2ME workflows can be found on our [website](https://labs.epi2me.io/wfindex).
+The workflow can currently be run using either
+[Docker](https://www.docker.com/products/docker-desktop)
+or [Singularity](https://docs.sylabs.io/guides/3.0/user-guide/index.html)
+to provide isolation of the required software.
+Both methods are automated out-of-the-box provided
+either Docker or Singularity is installed.
+This is controlled by the
+[`-profile`](https://www.nextflow.io/docs/latest/config.html#config-profiles)
+parameter as exemplified below.
 
-The following command can be used to obtain the workflow. This will pull the repository into the assets folder of nextflow and provide a list of all parameters available for the workflow as well as an example command:
+It is not required to clone or download the git repository
+in order to run the workflow.
+More information on running EPI2ME workflows can
+be found on our [website](https://labs.epi2me.io/wfindex).
+
+The following command can be used to obtain the workflow.
+This will pull the repository in to the assets folder of
+Nextflow and provide a list of all parameters
+available for the workflow as well as an example command:
 
 ```
-nextflow run epi2me-labs/wf-16s --help 
+nextflow run epi2me-labs/wf-16s --help
+```
+To update a workflow to the latest version on the command line use
+the following command:
+```
+nextflow pull epi2me-labs/wf-16s
 ```
 
-A demo dataset is provided for testing of the workflow. It can be downloaded using: 
-
+A demo dataset is provided for testing of the workflow.
+It can be downloaded and unpacked using the following commands:
 ```
 wget https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-16s/wf-16s-demo.tar.gz
 tar -xzvf wf-16s-demo.tar.gz
 ```
-
-The workflow can be run with the demo data using: 
-
+The workflow can then be run with the downloaded demo data using:
 ```
 nextflow run epi2me-labs/wf-16s \
---fastq wf-16s-demo/test_data/ \
--profile standard 
+	--fastq 'wf-16s-demo/test_data' \
+	--minimap2_by_reference \
+	-profile standard
 ```
 
-For further information about running a workflow on the command line see https://labs.epi2me.io/wfquickstart/
+For further information about running a workflow on
+the command line see https://labs.epi2me.io/wfquickstart/
+
 
 
 
@@ -157,7 +179,7 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 | taxonomy | string | Not required but can be used to specifically override taxonomy database. Change the default to use a different taxonomy file  [.tar.gz or directory]. | By default NCBI taxonomy file will be downloaded and used. |  |
 | reference | string | Override the FASTA reference file selected by the database_set parameter. It can be a FASTA format reference sequence collection or a minimap2 MMI format index. | This option should be used in conjunction with the database parameter to specify a custom database. |  |
 | ref2taxid | string | Not required but can be used to specify a  ref2taxid mapping. Format is .tsv (refname  taxid), no header row. | By default uses ref2taxid for option chosen in database_set parameter. |  |
-| taxonomic_rank | string | Returns results at the taxonomic rank chosen. In the Kraken2 pipeline: set the level that Bracken will estimate abundance at. Default: G (genus). Other possible options are K (kingdom level), P (phylum), C (class), O (order), F (family), and S (species). |  | G |
+| taxonomic_rank | string | Returns results at the taxonomic rank chosen. In the Kraken2 pipeline, this sets the level that Bracken will estimate abundance at. Default: G (genus). Other possible options are P (phylum), C (class), O (order), F (family), and S (species). |  | G |
 
 
 ### Kraken2 Options
@@ -166,8 +188,7 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 |--------------------------|------|-------------|------|---------|
 | bracken_length | integer | Set the length value Bracken will use | Should be set to the length used to generate the kmer distribution file supplied in the Kraken database input directory. For the default datasets these will be set automatically. ncbi_16s_18s = 1000 , ncbi_16s_18s_28s_ITS = 1000 , PlusPF-8 = 300 |  |
 | kraken2_memory_mapping | boolean | Avoids loading database into RAM | Kraken 2 will by default load the database into process-local RAM; this flag will avoid doing so. It may be useful if the available RAM memory is lower than the size of the chosen database. | False |
-| include_kraken2_assignments | boolean | A per sample TSV file that indicates how each input sequence was classified as well as the taxon that has been assigned to each read. The TSV's will only be output on completion of the workflow and therefore not at all if using the real time option whilst running indefinitely. |  | False |
-| kraken2_confidence | number | Kraken2 Confidence score threshold. Default: 0.0. Valid interval: 0-1 | Apply a threshold to determine if a sequence is classified or unclassified. Please visit the following link for further details about how it works: https://github.com/DerrickWood/kraken2/wiki/Manual#confidence-scoring. | 0.0 |
+| kraken2_confidence | number | Kraken2 Confidence score threshold. Default: 0.0. Valid interval: 0-1 | Apply a threshold to determine if a sequence is classified or unclassified. See the [kraken2 manual section on confidence scoring](https://github.com/DerrickWood/kraken2/wiki/Manual#confidence-scoring) for further details about how it works. | 0.0 |
 
 
 ### Minimap2 Options
@@ -176,8 +197,7 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 |--------------------------|------|-------------|------|---------|
 | minimap2filter | string | Filter output of minimap2 by taxids inc. child nodes, E.g. "9606,1404" | Provide a list of taxids if you are only interested in certain ones in your minimap2 analysis outputs. |  |
 | minimap2exclude | boolean | Invert minimap2filter and exclude the given taxids instead | Exclude a list of taxids from analysis outputs. | False |
-| split_prefix | boolean | Enable if using a very large reference with minimap2 | If reference fasta large enough to require multipart index, set to true to use split-prefix option with minimap2.  | False |
-| keep_bam | boolean | Copy bam files into the output directory. It also creates the configuration and reduced reference files needed to load the alignments in IGV. |  | False |
+| keep_bam | boolean | Copy bam files into the output directory. |  | False |
 | minimap2_by_reference | boolean | Add a table with the mean sequencing depth per reference, standard deviation and coefficient of variation. It adds a scatterplot of the sequencing depth vs. the coverage and a heatmap showing the depth per percentile to the report |  | False |
 | min_percent_identity | number | Minimum percentage of identity with the matched reference to define a sequence as classified; sequences with a value lower than this are defined as unclassified. |  | 95 |
 | min_ref_coverage | number | Minimum coverage value to define a sequence as classified; sequences with a coverage value lower than this are defined as unclassified. Use this option if you expect reads whose lengths are similar to the references' lengths. |  | 90 |
@@ -196,6 +216,8 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
 | out_dir | string | Directory for output of all user-facing files. |  | output |
+| igv | boolean | Enable IGV visualisation in the EPI2ME Desktop Application by creating the required files. This will also cause the workflow to publish BAM files to the output directory. |  | False |
+| include_read_assignments | boolean | A per-sample TSV file that indicates the taxonomy assigned to each sequence. The TSVs will only be published to the output on completion of the workflow, and therefore if running indefinitely using the real time option, these files will never be published. |  | False |
 
 
 ### Advanced Options
@@ -218,21 +240,22 @@ Output files may be aggregated including information for all samples or provided
 
 | Title | File path | Description | Per sample or aggregated |
 |-------|-----------|-------------|--------------------------|
-| Workflow report | ./wf-metagenomics-report.html | Report for all samples. | aggregated |
-| Abundance table with counts per taxa | ./abundance_table_{{ taxonomic_rank }}.tsv | Per-taxa counts TSV, including all samples. | aggregated |
-| Bracken report file | ./bracken/{{ alias }}.kraken2_bracken.report | TSV file with the abundance of each taxa. See more info here: https://github.com/jenniferlu717/Bracken#output-kraken-style-bracken-report. | per-sample |
-| Kraken2 taxonomic assignment per read (Kraken2 pipeline) | ./kraken2/{{ alias }}.kraken2.report.txt | Lineage-aggregated counts. See more info here: https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown#sample-report-output-format. | per-sample |
-| Kraken2 taxonomic asignment per read (Kraken2 pipeline) | ./kraken2/{{ alias }}.kraken2.assignments.tsv | TSV file with the taxonomic assignment per read. See more info here: https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown#standard-kraken-output-format. | per-sample |
-| Host BAM file | ./host_bam/{{ alias }}.bam | BAM file generated from mapping filtered input reads to the host reference. | per-sample |
-| BAM index file of host reads | ./host_bam/{{ alias }}.bai | BAM index file generated from mapping filtered input reads to the host reference. | per-sample |
-| BAM file (minimap2) | ./bams/{{ alias }}.reference.bam | BAM file generated from mapping filtered input reads to the reference. | per-sample |
-| BAM index file (minimap2) | ./bams/{{ alias }}.reference.bam.bai | Index file generated from mapping filtered input reads to the reference. | per-sample |
-| BAM flagstat (minimap2) | ./bams/{{ alias }}.bamstats_results/bamstats.flagstat.tsv | Mapping results per reference | per-sample |
-| Minimap2 alignment statistics (minimap2) | ./bams/{{ alias }}.bamstats_results/bamstats.readstats.tsv.gz | Per read stats after aligning | per-sample |
-| Reduced reference FASTA file | ./igv_reference/reduced_reference.fasta.gz | Reference FASTA file containing only those sequences that have reads mapped against them. | aggregated |
-| Index of the reduced reference FASTA file | ./igv_reference/reduced_reference.fasta.gz.fai | Index of the reference FASTA file containing only those sequences that have reads mapped against them. | aggregated |
-| GZI index of the reduced reference FASTA file | ./igv_reference/reduced_reference.fasta.gz.gzi | Index of the reference FASTA file containing only those sequences that have reads mapped against them. | aggregated |
-| JSON configuration file for IGV browser | ./igv.json | JSON configuration file to be loaded in IGV for visualising alignments against the reduced reference. | aggregated |
+| workflow report | wf-16s-report.html | Report for all samples. | aggregated |
+| Abundance table with counts per taxa | abundance_table_{{ taxonomic_rank }}.tsv | Per-taxa counts TSV, including all samples. | aggregated |
+| Bracken report file | bracken/{{ alias }}.kraken2_bracken.report | TSV file with the abundance of each taxa. More info about [bracken report](https://github.com/jenniferlu717/Bracken#output-kraken-style-bracken-report). | per-sample |
+| Kraken2 taxonomic assignment per read (Kraken2 pipeline) | kraken2/{{ alias }}.kraken2.report.txt | Lineage-aggregated counts. More info about [kraken2 report](https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown#sample-report-output-format). | per-sample |
+| Kraken2 taxonomic asignment per read (Kraken2 pipeline) | kraken2/{{ alias }}.kraken2.assignments.tsv | TSV file with the taxonomic assignment per read. More info about [kraken2 assignments report](https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown#standard-kraken-output-format). | per-sample |
+| Host BAM file | host_bam/{{ alias }}.bam | BAM file generated from mapping filtered input reads to the host reference. | per-sample |
+| BAM index file of host reads | host_bam/{{ alias }}.bai | BAM index file generated from mapping filtered input reads to the host reference. | per-sample |
+| BAM file (minimap2) | bams/{{ alias }}.reference.bam | BAM file generated from mapping filtered input reads to the reference. | per-sample |
+| BAM index file (minimap2) | bams/{{ alias }}.reference.bam.bai | Index file generated from mapping filtered input reads to the reference. | per-sample |
+| BAM flagstat (minimap2) | bams/{{ alias }}.bamstats_results/bamstats.flagstat.tsv | Mapping results per reference | per-sample |
+| Minimap2 alignment statistics (minimap2) | bams/{{ alias }}.bamstats_results/bamstats.readstats.tsv.gz | Per read stats after aligning | per-sample |
+| Reduced reference FASTA file | igv_reference/reduced_reference.fasta.gz | Reference FASTA file containing only those sequences that have reads mapped against them. | aggregated |
+| Index of the reduced reference FASTA file | igv_reference/reduced_reference.fasta.gz.fai | Index of the reference FASTA file containing only those sequences that have reads mapped against them. | aggregated |
+| GZI index of the reduced reference FASTA file | igv_reference/reduced_reference.fasta.gz.gzi | Index of the reference FASTA file containing only those sequences that have reads mapped against them. | aggregated |
+| JSON configuration file for IGV browser | igv.json | JSON configuration file to be loaded in IGV for visualising alignments against the reduced reference. | aggregated |
+| Taxonomic assignment per read. | reads_assignments/{{ alias }}.{{kraken2|minimap2}}.assignments.tsv | TSV file with the taxonomic assignment per read. | per-sample |
 
 
 
@@ -267,7 +290,7 @@ nextflow run epi2me-labs/wf-16s --fastq test_data/case01 --classifier minimap2
 
 The creation of alignment statistics plots can be enabled with the `minimap2_by_reference` flag. Using this option produces a table and scatter plot in the report showing sequencing depth and coverage of each reference. The report also contains a heatmap indicating the sequencing depth over relative genomic coordinates for the references with the highest coverage (references with a mean coverage of less than 1% of the one with the largest value are omitted).
 
-In addition, the user can output BAM files in a folder called `bams` by using the option `keep_bam`. If the user provides a custom database, the workflow will also output the references with reads mappings, as well as an IGV configuration file. This configuration file allows the user to view the alignments in the EPI2ME Desktop Application in the Viewer tab. Note that the number of references can be reduced using the `abundance_threshold` option, which will select those references with a number of reads aligned higher than this value. Please consider that the view of the alignment is highly dependent on the reference selected.
+In addition, the user can output BAM files in a folder called `bams` by using the option `keep_bam`. If the user provides a custom database and uses the `igv` option, the workflow will also output the references with reads mappings, as well as an IGV configuration file. This configuration file allows the user to view the alignments in the EPI2ME Desktop Application in the Viewer tab. Note that the number of references can be reduced using the `abundance_threshold` option, which will select those references with a number of reads aligned higher than this value. Please, consider that the view of the alignment is highly dependent on the reference selected.
 
 #### 3.2 Using Kraken2
 
