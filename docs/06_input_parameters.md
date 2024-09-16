@@ -40,7 +40,7 @@
 | taxonomy | string | Not required but can be used to specifically override taxonomy database. Change the default to use a different taxonomy file  [.tar.gz or directory]. | By default NCBI taxonomy file will be downloaded and used. |  |
 | reference | string | Override the FASTA reference file selected by the database_set parameter. It can be a FASTA format reference sequence collection or a minimap2 MMI format index. | This option should be used in conjunction with the database parameter to specify a custom database. |  |
 | ref2taxid | string | Not required but can be used to specify a  ref2taxid mapping. Format is .tsv (refname  taxid), no header row. | By default uses ref2taxid for option chosen in database_set parameter. |  |
-| taxonomic_rank | string | Returns results at the taxonomic rank chosen. In the Kraken2 pipeline: set the level that Bracken will estimate abundance at. Default: G (genus). Other possible options are K (kingdom level), P (phylum), C (class), O (order), F (family), and S (species). |  | G |
+| taxonomic_rank | string | Returns results at the taxonomic rank chosen. In the Kraken2 pipeline, this sets the level that Bracken will estimate abundance at. Default: G (genus). Other possible options are P (phylum), C (class), O (order), F (family), and S (species). |  | G |
 
 
 ### Kraken2 Options
@@ -49,8 +49,7 @@
 |--------------------------|------|-------------|------|---------|
 | bracken_length | integer | Set the length value Bracken will use | Should be set to the length used to generate the kmer distribution file supplied in the Kraken database input directory. For the default datasets these will be set automatically. ncbi_16s_18s = 1000 , ncbi_16s_18s_28s_ITS = 1000 , PlusPF-8 = 300 |  |
 | kraken2_memory_mapping | boolean | Avoids loading database into RAM | Kraken 2 will by default load the database into process-local RAM; this flag will avoid doing so. It may be useful if the available RAM memory is lower than the size of the chosen database. | False |
-| include_kraken2_assignments | boolean | A per sample TSV file that indicates how each input sequence was classified as well as the taxon that has been assigned to each read. The TSV's will only be output on completion of the workflow and therefore not at all if using the real time option whilst running indefinitely. |  | False |
-| kraken2_confidence | number | Kraken2 Confidence score threshold. Default: 0.0. Valid interval: 0-1 | Apply a threshold to determine if a sequence is classified or unclassified. Please visit the following link for further details about how it works: https://github.com/DerrickWood/kraken2/wiki/Manual#confidence-scoring. | 0.0 |
+| kraken2_confidence | number | Kraken2 Confidence score threshold. Default: 0.0. Valid interval: 0-1 | Apply a threshold to determine if a sequence is classified or unclassified. See the [kraken2 manual section on confidence scoring](https://github.com/DerrickWood/kraken2/wiki/Manual#confidence-scoring) for further details about how it works. | 0.0 |
 
 
 ### Minimap2 Options
@@ -59,8 +58,7 @@
 |--------------------------|------|-------------|------|---------|
 | minimap2filter | string | Filter output of minimap2 by taxids inc. child nodes, E.g. "9606,1404" | Provide a list of taxids if you are only interested in certain ones in your minimap2 analysis outputs. |  |
 | minimap2exclude | boolean | Invert minimap2filter and exclude the given taxids instead | Exclude a list of taxids from analysis outputs. | False |
-| split_prefix | boolean | Enable if using a very large reference with minimap2 | If reference fasta large enough to require multipart index, set to true to use split-prefix option with minimap2.  | False |
-| keep_bam | boolean | Copy bam files into the output directory. It also creates the configuration and reduced reference files needed to load the alignments in IGV. |  | False |
+| keep_bam | boolean | Copy bam files into the output directory. |  | False |
 | minimap2_by_reference | boolean | Add a table with the mean sequencing depth per reference, standard deviation and coefficient of variation. It adds a scatterplot of the sequencing depth vs. the coverage and a heatmap showing the depth per percentile to the report |  | False |
 | min_percent_identity | number | Minimum percentage of identity with the matched reference to define a sequence as classified; sequences with a value lower than this are defined as unclassified. |  | 95 |
 | min_ref_coverage | number | Minimum coverage value to define a sequence as classified; sequences with a coverage value lower than this are defined as unclassified. Use this option if you expect reads whose lengths are similar to the references' lengths. |  | 90 |
@@ -79,6 +77,8 @@
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
 | out_dir | string | Directory for output of all user-facing files. |  | output |
+| igv | boolean | Enable IGV visualisation in the EPI2ME Desktop Application by creating the required files. This will also cause the workflow to publish BAM files to the output directory. |  | False |
+| include_read_assignments | boolean | A per-sample TSV file that indicates the taxonomy assigned to each sequence. The TSVs will only be published to the output on completion of the workflow, and therefore if running indefinitely using the real time option, these files will never be published. |  | False |
 
 
 ### Advanced Options

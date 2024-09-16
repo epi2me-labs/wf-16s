@@ -83,7 +83,11 @@
             "title": "Real Time Analysis Options",
             "type": "object",
             "description": "Options relating to the default real-time Kraken2 workflow.",
-            "default": "",
+            "overrides": {
+                "epi2mecloud": {
+                    "hidden": true
+                }
+            },
             "properties": {
                 "real_time": {
                     "type": "boolean",
@@ -194,7 +198,12 @@
                     "format": "path",
                     "title": "Kraken2 database",
                     "description": "Not required but can be used to specifically override Kraken2 database [.tar.gz or Directory].",
-                    "help_text": "By default uses database chosen in database_set parameter."
+                    "help_text": "By default uses database chosen in database_set parameter.",
+                    "overrides": {
+                        "epi2mecloud": {
+                            "hidden": true
+                        }
+                    }
                 },
                 "taxonomy": {
                     "type": "string",
@@ -217,16 +226,11 @@
                     "description": "Not required but can be used to specify a  ref2taxid mapping. Format is .tsv (refname  taxid), no header row.",
                     "help_text": "By default uses ref2taxid for option chosen in database_set parameter."
                 },
-                "database_sets": {
-                    "type": "object",
-                    "hidden": true,
-                    "description": "A map containing the available sources and their default resource paths."
-                },
                 "taxonomic_rank": {
                     "type": "string",
                     "default": "G",
                     "title": "Taxonomic rank",
-                    "description": "Returns results at the taxonomic rank chosen. In the Kraken2 pipeline: set the level that Bracken will estimate abundance at. Default: G (genus). Other possible options are K (kingdom level), P (phylum), C (class), O (order), F (family), and S (species).",
+                    "description": "Returns results at the taxonomic rank chosen. In the Kraken2 pipeline, this sets the level that Bracken will estimate abundance at. Default: G (genus). Other possible options are P (phylum), C (class), O (order), F (family), and S (species).",
                     "enum": [
                         "S",
                         "G",
@@ -243,7 +247,7 @@
             "title": "Kraken2 Options",
             "type": "object",
             "fa_icon": "fas fa-university",
-            "help_text": "\nKraken2\nIt is possible to enable classification by Kraken2, \nand disable alignment which is a faster but coarser method of \nclassification reliant on the presence of a Kraken2 database.\n",
+            "help_text": "Kraken2: It is possible to enable classification by Kraken2, instead of alignment-based classification. This is a faster, but coarser, method of classification that is reliant on the presence of a Kraken2 database.",
             "properties": {
                 "bracken_length": {
                     "type": "integer",
@@ -259,19 +263,12 @@
                     "description": "Avoids loading database into RAM",
                     "help_text": "Kraken 2 will by default load the database into process-local RAM; this flag will avoid doing so. It may be useful if the available RAM memory is lower than the size of the chosen database."
                 },
-                "include_kraken2_assignments": {
-                    "type": "boolean",
-                    "default": false,
-                    "title": "Include Kraken2 reads assignments",
-                    "description": "A per sample TSV file that indicates how each input sequence was classified as well as the taxon that has been assigned to each read. The TSV's will only be output on completion of the workflow and therefore not at all if using the real time option whilst running indefinitely.",
-                    "help": "It also includes the taxon that each k-mer mapped back to, if the k-mer was able to be classified."
-                },
                 "kraken2_confidence": {
                     "type": "number",
                     "default": 0.0,
                     "title": "Confidence score threshold",
                     "description": "Kraken2 Confidence score threshold. Default: 0.0. Valid interval: 0-1",
-                    "help_text": "Apply a threshold to determine if a sequence is classified or unclassified. Please visit the following link for further details about how it works: https://github.com/DerrickWood/kraken2/wiki/Manual#confidence-scoring."
+                    "help_text": "Apply a threshold to determine if a sequence is classified or unclassified. See the [kraken2 manual section on confidence scoring](https://github.com/DerrickWood/kraken2/wiki/Manual#confidence-scoring) for further details about how it works."
                 }
             },
             "description": "Kraken2 classification options. Only relevant if classifier parameter is set to kraken2"
@@ -294,18 +291,11 @@
                     "description": "Invert minimap2filter and exclude the given taxids instead",
                     "help_text": "Exclude a list of taxids from analysis outputs."
                 },
-                "split_prefix": {
-                    "type": "boolean",
-                    "title": "Enable multipart index",
-                    "default": false,
-                    "description": "Enable if using a very large reference with minimap2",
-                    "help_text": "If reference fasta large enough to require multipart index, set to true to use split-prefix option with minimap2. "
-                },
                 "keep_bam": {
                     "type": "boolean",
                     "title": "Enable keep BAM files",
                     "default": false,
-                    "description": "Copy bam files into the output directory. It also creates the configuration and reduced reference files needed to load the alignments in IGV."
+                    "description": "Copy bam files into the output directory."
                 },
                 "minimap2_by_reference": {
                     "type": "boolean",
@@ -331,7 +321,7 @@
                 }
             },
             "description": "Minimap2 classification options. Only relevant if classifier parameter is set to minimap2.",
-            "help_text": "Minimap2\nThe default strategy is using minimap2 to perform full\nalignments against .fasta formatted references sequences. "
+            "help_text": "Minimap2: The default strategy is using minimap2 to perform full alignments against .fasta-formatted references sequences."
         },
         "report_options": {
             "title": "Report Options",
@@ -365,6 +355,18 @@
                     "default": "output",
                     "title": "Output folder name",
                     "description": "Directory for output of all user-facing files."
+                },
+                "igv": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "IGV",
+                    "description": "Enable IGV visualisation in the EPI2ME Desktop Application by creating the required files. This will also cause the workflow to publish BAM files to the output directory."
+                },
+                "include_read_assignments": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Include Kraken2/Minimap2 taxonomy per read.",
+                    "description": "A per-sample TSV file that indicates the taxonomy assigned to each sequence. The TSVs will only be published to the output on completion of the workflow, and therefore if running indefinitely using the real time option, these files will never be published."
                 }
             }
         },
@@ -406,30 +408,32 @@
         "miscellaneous_options": {
             "title": "Miscellaneous Options",
             "type": "object",
-            "default": "",
+            "fa_icon": "fas fa-file-import",
             "description": "Everything else.",
-            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
+            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs. Typically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
             "properties": {
                 "disable_ping": {
                     "type": "boolean",
+                    "title": "Disable ping",
                     "default": false,
-                    "description": "Enable to prevent sending a workflow ping."
+                    "description": "Enable to prevent sending a workflow ping.",
+                    "hidden": false
                 },
                 "help": {
                     "type": "boolean",
-                    "description": "Display help text.",
-                    "fa_icon": "fas fa-question-circle",
+                    "title": "Display help text",
                     "default": false,
+                    "fa_icon": "fas fa-question-circle",
                     "hidden": true
                 },
                 "version": {
                     "type": "boolean",
+                    "title": "Display version",
+                    "default": false,
                     "description": "Display version and exit.",
                     "fa_icon": "fas fa-question-circle",
-                    "default": false,
                     "hidden": true
                 }
-
             }
         }
     },
