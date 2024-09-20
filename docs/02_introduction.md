@@ -6,7 +6,6 @@ This workflow can be used for the following:
 
 Additional features:
 + Two different approaches are available: `minimap2` (using alignment, default option) or `kraken2` (k-mer based).
-+ Option to run it in [real time](#321-running-wf-metagenomics-in-real-time): `real_time`.
 + Results include:
     - An abundance table with counts per taxa in all the samples.
     - Interactive sankey and sunburst plots to explore the different identified lineages.
