@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.4.0]
+### Changed
+- Bump to wf-metagenomics v2.12.0
+### Added
+- `bracken_threshold` parameter to adjust bracken minimum read threshold, default 10.
+
 ## [v1.3.0]
 ### Fixed
 - Switch to markdown links in the outputs table in the README.

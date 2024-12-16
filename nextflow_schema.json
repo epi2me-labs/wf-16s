@@ -156,7 +156,7 @@
                     "format": "file-path",
                     "title": "Sample sheet",
                     "description": "A CSV file used to map barcodes to sample aliases. The sample sheet can be provided when the input data is a directory containing sub-directories with FASTQ files. Disabled in the real time pipeline.",
-                    "help_text": "The sample sheet is a CSV file with, minimally, columns named `barcode` , `sample_id`,  `alias`. Extra columns are allowed. A `type` column is required for certain workflows and should have the following values; `test_sample`, `positive_control`, `negative_control`, `no_template_control`."
+                    "help_text": "The sample sheet is a CSV file with, minimally, columns named `barcode`,`alias`. Extra columns are allowed."
                 },
                 "sample": {
                     "type": "string",
@@ -234,20 +234,27 @@
                     "enum": [
                         "S",
                         "G",
-                        "k",
                         "F",
                         "O",
                         "C",
                         "P"
                     ]
                 }
+            },
+            "dependencies": {
+                "reference": [
+                    "ref2taxid"
+                ],
+                "ref2taxid": [
+                    "reference"
+                ]
             }
         },
         "kraken2_options": {
             "title": "Kraken2 Options",
             "type": "object",
             "fa_icon": "fas fa-university",
-            "help_text": "Kraken2: It is possible to enable classification by Kraken2, instead of alignment-based classification. This is a faster, but coarser, method of classification that is reliant on the presence of a Kraken2 database.",
+            "help_text": "Kraken2: It is possible to enable classification by Kraken2, disabling alignment, which is a faster but coarser method of classification reliant on the presence of a Kraken2 database.",
             "properties": {
                 "bracken_length": {
                     "type": "integer",
@@ -255,6 +262,14 @@
                     "description": "Set the length value Bracken will use",
                     "minimum": 1,
                     "help_text": "Should be set to the length used to generate the kmer distribution file supplied in the Kraken database input directory. For the default datasets these will be set automatically. ncbi_16s_18s = 1000 , ncbi_16s_18s_28s_ITS = 1000 , PlusPF-8 = 300"
+                },
+                "bracken_threshold": {
+                    "type": "integer",
+                    "title": "Bracken minimum read threshold",
+                    "description": "Set the minimum read threshold Bracken will use to consider a taxon",
+                    "default": 10,
+                    "minimum": 0,
+                    "help_text": "Bracken will only consider taxa with a read count greater than or equal to this value."
                 },
                 "kraken2_memory_mapping": {
                     "type": "boolean",
@@ -339,7 +354,7 @@
                     "type": "integer",
                     "default": 9,
                     "title": "Number of taxa to be displayed in the barplot",
-                    "description": "Number of most abundance taxa to be displayed in the barplot. The rest of taxa will be grouped under the \"Other\" category."
+                    "description": "Number of most abundant taxa to be displayed in the barplot. The remaining taxa will be grouped under the \"Other\" category."
                 }
             }
         },
@@ -360,7 +375,7 @@
                     "type": "boolean",
                     "default": false,
                     "title": "IGV",
-                    "description": "Enable IGV visualisation in the EPI2ME Desktop Application by creating the required files. This will also cause the workflow to publish BAM files to the output directory."
+                    "description": "Enable IGV visualisation in the EPI2ME Desktop Application by creating the required files. This will cause the workflow to emit the BAM files as well. If using a custom reference, this must be a FASTA file and not a minimap2 MMI format index."
                 },
                 "include_read_assignments": {
                     "type": "boolean",

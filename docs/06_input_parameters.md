@@ -27,7 +27,7 @@
 
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
-| sample_sheet | string | A CSV file used to map barcodes to sample aliases. The sample sheet can be provided when the input data is a directory containing sub-directories with FASTQ files. Disabled in the real time pipeline. | The sample sheet is a CSV file with, minimally, columns named `barcode` , `sample_id`,  `alias`. Extra columns are allowed. A `type` column is required for certain workflows and should have the following values; `test_sample`, `positive_control`, `negative_control`, `no_template_control`. |  |
+| sample_sheet | string | A CSV file used to map barcodes to sample aliases. The sample sheet can be provided when the input data is a directory containing sub-directories with FASTQ files. Disabled in the real time pipeline. | The sample sheet is a CSV file with, minimally, columns named `barcode`,`alias`. Extra columns are allowed. |  |
 | sample | string | A single sample name for non-multiplexed data. Permissible if passing a single .fastq(.gz) file or directory of .fastq(.gz) files. Disabled in the real time pipeline. |  |  |
 
 
@@ -48,6 +48,7 @@
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
 | bracken_length | integer | Set the length value Bracken will use | Should be set to the length used to generate the kmer distribution file supplied in the Kraken database input directory. For the default datasets these will be set automatically. ncbi_16s_18s = 1000 , ncbi_16s_18s_28s_ITS = 1000 , PlusPF-8 = 300 |  |
+| bracken_threshold | integer | Set the minimum read threshold Bracken will use to consider a taxon | Bracken will only consider taxa with a read count greater than or equal to this value. | 10 |
 | kraken2_memory_mapping | boolean | Avoids loading database into RAM | Kraken 2 will by default load the database into process-local RAM; this flag will avoid doing so. It may be useful if the available RAM memory is lower than the size of the chosen database. | False |
 | kraken2_confidence | number | Kraken2 Confidence score threshold. Default: 0.0. Valid interval: 0-1 | Apply a threshold to determine if a sequence is classified or unclassified. See the [kraken2 manual section on confidence scoring](https://github.com/DerrickWood/kraken2/wiki/Manual#confidence-scoring) for further details about how it works. | 0.0 |
 
@@ -69,7 +70,7 @@
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
 | abundance_threshold | number | Remove those taxa whose abundance is equal or lower than the chosen value. | To remove taxa with abundances lower than or equal to a relative value (compared to the total number of reads) use a decimal between 0-1 (1 not inclusive). To remove taxa with abundances lower than or equal to an absolute value, provide a number larger or equal to 1. | 1 |
-| n_taxa_barplot | integer | Number of most abundance taxa to be displayed in the barplot. The rest of taxa will be grouped under the "Other" category. |  | 9 |
+| n_taxa_barplot | integer | Number of most abundant taxa to be displayed in the barplot. The remaining taxa will be grouped under the "Other" category. |  | 9 |
 
 
 ### Output Options
@@ -77,7 +78,7 @@
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
 | out_dir | string | Directory for output of all user-facing files. |  | output |
-| igv | boolean | Enable IGV visualisation in the EPI2ME Desktop Application by creating the required files. This will also cause the workflow to publish BAM files to the output directory. |  | False |
+| igv | boolean | Enable IGV visualisation in the EPI2ME Desktop Application by creating the required files. This will cause the workflow to emit the BAM files as well. If using a custom reference, this must be a FASTA file and not a minimap2 MMI format index. |  | False |
 | include_read_assignments | boolean | A per-sample TSV file that indicates the taxonomy assigned to each sequence. The TSVs will only be published to the output on completion of the workflow, and therefore if running indefinitely using the real time option, these files will never be published. |  | False |
 
 
