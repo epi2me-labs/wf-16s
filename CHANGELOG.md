@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.5.0]
+### Changed
+- Bump to wf-metagenomics v2.13.0
+    - NCBI Taxonomy database updated to the 2025-01-01 release
+    - Reconciled workflow with wf-template v5.5.0.
+    - Fix error: bracken-build: line 231: syntax error: unexpected end of file when using SILVA database.
+### Added
+- `output_unclassified` parameter.  When True, output unclassified FASTQ sequences for both minimap2 and kraken2 modes (default: False).
+- Table with alignment stats is now an output: alignment_tables/{{ alias }}.alignment-stats.tsv
+
 ## [v1.4.0]
 ### Changed
 - Bump to wf-metagenomics v2.12.0
