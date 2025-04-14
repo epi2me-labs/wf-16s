@@ -1,6 +1,6 @@
 # 16s workflow
 
-Taxonomic classification of single reads from amplicon-targeted sequencing.
+Taxonomic classification of 16S rRNA gene sequencing data.
 
 
 
@@ -217,7 +217,8 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 |--------------------------|------|-------------|------|---------|
 | out_dir | string | Directory for output of all user-facing files. |  | output |
 | igv | boolean | Enable IGV visualisation in the EPI2ME Desktop Application by creating the required files. This will cause the workflow to emit the BAM files as well. If using a custom reference, this must be a FASTA file and not a minimap2 MMI format index. |  | False |
-| include_read_assignments | boolean | A per-sample TSV file that indicates the taxonomy assigned to each sequence. The TSVs will only be published to the output on completion of the workflow, and therefore if running indefinitely using the real time option, these files will never be published. |  | False |
+| include_read_assignments | boolean | A per-sample TSV file that indicates the taxonomy assigned to each sequence. These will only be output on completion of the workflow. If using the real time option, these files will not be output. |  | False |
+| output_unclassified | boolean | Output a FASTQ of the unclassified reads. |  | False |
 
 
 ### Advanced Options
@@ -257,6 +258,8 @@ Output files may be aggregated including information for all samples or provided
 | JSON configuration file for IGV browser | igv.json | JSON configuration file to be loaded in IGV for visualising alignments against the reduced reference. | aggregated |
 | Taxonomic assignment per read. | reads_assignments/{{ alias }}.*.assignments.tsv | TSV file with the taxonomic assignment per read. | per-sample |
 | FASTQ of the selected taxids. | extracted/{{ alias }}.minimap2.extracted.fastq | FASTQ containing/excluding the reads of the selected taxids. | per-sample |
+| Unclassified FASTQ. | unclassified/{{ alias }}.unclassified.fq.gz | FASTQ containing the reads that have not been classified against the database. | per-sample |
+| Alignment statistics TSV | alignment_tables/{{ alias }}.alignment-stats.tsv | Coverage and taxonomy of each reference. | per-sample |
 
 
 
@@ -304,7 +307,7 @@ The main output of the wf-16s pipeline is the `wf-16s-report.html` which can be 
 The workflow output also contains Kraken and bracken reports for each sample. Additionally, the ‘species-abundance.tsv’ is a table with the counts of the different taxa per sample. You can use the flag `include_kraken2_assignments` to include a per sample TSV file that indicates how each input sequence was classified as well as the taxon that has been assigned to each read. This TSV file will only be output on completion of the workflow and therefore not at all if using the real time option whilst running indefinitely. This option is available in the Kraken2 pipeline.
 
 
-#### 5.1 Diversity indices
+#### 5. Diversity indices
 
 Species diversity refers to the taxonomic composition in a specific microbial community. There are some useful concepts to take into account:
 * Richness: number of unique taxonomic groups present in the community,
@@ -359,7 +362,7 @@ The report also includes the rarefaction curve per sample which displays the mea
 > Note: Within each rank, each named taxon is a unique unit. The counts are the number of reads assigned to that taxon. All `Unknown` sequences are considered as a unique taxon
 
 
-### 6. Running wf-metagenomics in real time
+### 6. Running wf-16s in real time
 
 > This feature is only available when using Kraken2 as the classifier. It is somewhat experimental and may not work as expected in all environments.
 

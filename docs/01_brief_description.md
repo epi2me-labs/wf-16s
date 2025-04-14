@@ -1,1 +1,1 @@
-Taxonomic classification of single reads from amplicon-targeted sequencing.
+Taxonomic classification of 16S rRNA gene sequencing data.

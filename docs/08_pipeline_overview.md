@@ -39,7 +39,7 @@ The main output of the wf-16s pipeline is the `wf-16s-report.html` which can be 
 The workflow output also contains Kraken and bracken reports for each sample. Additionally, the ‘species-abundance.tsv’ is a table with the counts of the different taxa per sample. You can use the flag `include_kraken2_assignments` to include a per sample TSV file that indicates how each input sequence was classified as well as the taxon that has been assigned to each read. This TSV file will only be output on completion of the workflow and therefore not at all if using the real time option whilst running indefinitely. This option is available in the Kraken2 pipeline.
 
 
-#### 5.1 Diversity indices
+#### 5. Diversity indices
 
 Species diversity refers to the taxonomic composition in a specific microbial community. There are some useful concepts to take into account:
 * Richness: number of unique taxonomic groups present in the community,
@@ -94,7 +94,7 @@ The report also includes the rarefaction curve per sample which displays the mea
 > Note: Within each rank, each named taxon is a unique unit. The counts are the number of reads assigned to that taxon. All `Unknown` sequences are considered as a unique taxon
 
 
-### 6. Running wf-metagenomics in real time
+### 6. Running wf-16s in real time
 
 > This feature is only available when using Kraken2 as the classifier. It is somewhat experimental and may not work as expected in all environments.
 

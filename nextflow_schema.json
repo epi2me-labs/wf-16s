@@ -3,7 +3,7 @@
     "$id": "https://raw.githubusercontent.com/epi2me-labs/wf-16s/master/nextflow_schema.json",
     "title": "epi2me-labs/wf-16s",
     "workflow_title": "16s workflow",
-    "description": "Taxonomic classification of single reads from amplicon-targeted sequencing.",
+    "description": "Taxonomic classification of 16S rRNA gene sequencing data.",
     "demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-16s/wf-16s-demo.tar.gz",
     "aws_demo_url": "https://ont-exd-int-s3-euwst1-epi2me-labs.s3.amazonaws.com/wf-16s/wf-16s-demo/aws.nextflow.config",
     "url": "https://github.com/epi2me-labs/wf-16s",
@@ -336,7 +336,7 @@
                 }
             },
             "description": "Minimap2 classification options. Only relevant if classifier parameter is set to minimap2.",
-            "help_text": "Minimap2: The default strategy is using minimap2 to perform full alignments against .fasta-formatted references sequences."
+            "help_text": "Minimap2: The default strategy uses minimap2 to perform full alignments against FASTA-formatted references sequences."
         },
         "report_options": {
             "title": "Report Options",
@@ -381,7 +381,13 @@
                     "type": "boolean",
                     "default": false,
                     "title": "Include Kraken2/Minimap2 taxonomy per read.",
-                    "description": "A per-sample TSV file that indicates the taxonomy assigned to each sequence. The TSVs will only be published to the output on completion of the workflow, and therefore if running indefinitely using the real time option, these files will never be published."
+                    "description": "A per-sample TSV file that indicates the taxonomy assigned to each sequence. These will only be output on completion of the workflow. If using the real time option, these files will not be output."
+                },
+                "output_unclassified": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Output unclassified reads.",
+                    "description": "Output a FASTQ of the unclassified reads."
                 }
             }
         },
