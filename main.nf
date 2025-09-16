@@ -4,13 +4,21 @@ import groovy.json.JsonBuilder
 nextflow.enable.dsl = 2
 
 include { fastq_ingress; xam_ingress } from './lib/ingress'
+include { getParams } from './lib/common'
+include { run_common } from './wf-metagenomics/subworkflows/common_pipeline'
 include { minimap_pipeline } from './wf-metagenomics/subworkflows/minimap_pipeline'
 // standard kraken2
 include { kraken_pipeline } from './wf-metagenomics/subworkflows/kraken_pipeline'
-include { real_time_pipeline } from './wf-metagenomics/subworkflows/real_time_pipeline'
+
 // databases
 include { prepare_databases } from "./wf-metagenomics/modules/local/databases.nf"
+include {
+    makeReport;
+    getVersions;
+    getVersionsCommon;
+} from "./wf-metagenomics/modules/local/common"
 
+OPTIONAL_FILE = file("$projectDir/data/OPTIONAL_FILE")
 nextflow.preview.recursion=true
 
 // entrypoint workflow
@@ -58,14 +66,8 @@ workflow {
         }
     }
 
-    if ((params.classifier == 'kraken2' || params.real_time ) && params.reference) {
+    if ((params.classifier == 'kraken2' ) && params.reference) {
         throw new Exception("To use kraken2 with your custom database, you need to use `--database` (instead of `--reference`) and include the `bracken_dist` within it.")
-    }
-    if (params.classifier != 'kraken2' && params.real_time) {
-        throw new Exception("Real time subworkflow must use kraken2 classifier.")
-    }
-    if (params.real_time) {
-        log.info("WARNING: The real-time processing functionality of this workflow is experimental and may not be suitable for all use cases.")
     }
 
     // If user provides each database, set to 'custom' the params.database_set
@@ -100,23 +102,20 @@ workflow {
     }
 
     // Input data
-    // real time wf still requires per-read-stats as it computes its own aggregated statistics
-    // TODO: investigate chunk option for real time and use of histograms
     if (params.fastq) {
-            samples = fastq_ingress([
+            ingress_samples = fastq_ingress([
                 "input":params.fastq,
-                "sample": params.real_time ? null : params.sample,
-                "sample_sheet": params.real_time ? null : params.sample_sheet,
+                "sample": params.sample,
+                "sample_sheet": params.sample_sheet,
                 "analyse_unclassified":params.analyse_unclassified,
                 "stats": true,
                 "fastcat_extra_args": fastcat_extra_args.join(" "),
-                "watch_path": params.real_time,
-                "per_read_stats": params.real_time ? true : false
+                "per_read_stats": false
             ])
     } else {
             // if we didn't get a `--fastq`, there must have been a `--bam` (as is codified
             // by the schema)
-            samples = xam_ingress([
+            ingress_samples = xam_ingress([
                 "input":params.bam,
                 "sample":params.sample,
                 "sample_sheet":params.sample_sheet,
@@ -124,8 +123,7 @@ workflow {
                 "return_fastq": true,
                 "keep_unaligned": true,
                 "stats": true,
-                "watch_path": params.real_time,
-                "per_read_stats": params.real_time ? true : false
+                "per_read_stats": false
             ])
     }
     
@@ -134,14 +132,14 @@ workflow {
     log.info(
         "Note: Empty files or those files whose reads have been discarded after filtering based on " +
         "read length and/or read quality will not appear in the report and will be excluded from subsequent analysis.")
-    samples = samples
-    | filter { meta, seqs, stats ->
-        valid = meta['n_seqs'] > 0
-        if (!valid) {
-            log.warn "Found empty file for sample '${meta["alias"]}'."
+    ingress_samples_filtered = ingress_samples
+        | filter { meta, _seqs, _stats ->
+            def valid = meta['n_seqs'] > 0
+            if (!valid) {
+                log.warn "Found empty file for sample '${meta["alias"]}'."
+            }
+            valid
         }
-        valid
-    }
 
     // Set minimap2 common options
     ArrayList common_minimap2_opts = [
@@ -150,75 +148,79 @@ workflow {
         "--cap-sw-mem 50m",
     ]
 
-    // Call the proper pipeline
-    if ("${params.classifier}" == "minimap2") {
+
+    // Run common
+    versions = getVersionsCommon(getVersions())
+    parameters = getParams()
+
+    if (params.exclude_host) {
+        host_reference = file(params.exclude_host, checkIfExists: true)
+        samples = run_common(ingress_samples_filtered, host_reference, common_minimap2_opts).samples
+    } else {
+        samples = ingress_samples_filtered
+    }
+
+    if (params.classifier == "minimap2") {
         log.info("Minimap2 pipeline.")
-        database = null
-        kmer_dist = null
         if (keep_bam) {
             common_minimap2_opts = common_minimap2_opts + ["-y"]
         }
-        databases_minimap2 = prepare_databases(
+        databases = prepare_databases(
             source_data_taxonomy,
             source_data_database
         )
         results = minimap_pipeline(
             samples,
-            databases_minimap2.reference,
-            databases_minimap2.ref2taxid,
-            databases_minimap2.taxonomy,
-            databases_minimap2.taxonomic_rank,
+            databases.reference,
+            databases.ref2taxid,
+            databases.taxonomy,
+            databases.taxonomic_rank,
             common_minimap2_opts,
-            keep_bam,
             output_igv
             )
-    }
-
+        alignment_stats = results.alignment_reports
+    } else {
     // Handle getting kraken2 database files if kraken2 classifier selected
-    if ("${params.classifier}" == "kraken2") {
         log.info("Kraken2 pipeline.")
-        reference = null
-        ref2taxid = null
-        databases_kraken2 = prepare_databases(
+        alignment_stats = Channel.empty()
+        databases = prepare_databases(
                 source_data_taxonomy,
                 source_data_database
         )
-        // check combination of params are set
-        if (params.real_time){
-            if (params.sample_sheet != null) {
-                log.info("The `sample_sheet` parameter is not used in the real time mode.")
-            }
-            if (params.sample != null) {
-                log.info("The `sample` parameter is not used in the real time mode.")
-            }
-            if (!params.read_limit){
-                log.info("Workflow will run indefinitely as no read_limit is set.")
-            }
-            log.info("Workflow will stop processing files after ${params.read_limit} reads.")
-        }
-
-        // Distinguish between real time or not
-       if (params.real_time) {
-            results = real_time_pipeline(
-                samples,
-                databases_kraken2.taxonomy,
-                databases_kraken2.database,
-                databases_kraken2.bracken_length,
-                databases_kraken2.taxonomic_rank,
-                common_minimap2_opts
-            )
-        } else {
-            results = kraken_pipeline(
-                samples,
-                databases_kraken2.taxonomy,
-                databases_kraken2.database,
-                databases_kraken2.bracken_length,
-                databases_kraken2.taxonomic_rank,
-                common_minimap2_opts
-            )
-        }
-
+        results = kraken_pipeline(
+            samples,
+            databases.taxonomy,
+            databases.database,
+            databases.bracken_length,
+            databases.taxonomic_rank,
+        )
     }
+
+    // Use initial reads stats (after fastcat) QC,
+    // and after host_depletion
+    // but update meta after running pipelines
+    for_report = ingress_samples_filtered
+        | map { meta, _path, stats ->
+            [ meta.alias, stats ] }
+        | combine(
+            results.metadata_after_taxonomy,
+            by: 0 )  // on alias
+        | multiMap { _alias, stats, meta ->
+            meta: meta
+            stats: stats }
+    // Reporting
+    makeReport(
+        workflow.manifest.version,
+        for_report.meta.collect(),
+        for_report.stats.collect(),
+        results.abundance_table,
+        alignment_stats.ifEmpty(OPTIONAL_FILE),
+        results.lineages,
+        versions,
+        parameters,
+        databases.taxonomic_rank,
+        OPTIONAL_FILE
+    )
 }
 
 workflow.onComplete {

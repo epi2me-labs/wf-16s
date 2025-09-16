@@ -42,7 +42,7 @@ docker-run:
     parallel:
         matrix:
             - MATRIX_NAME: [
-                "kraken2", "kraken2-real-time", "minimap2", "minimap2-sample-sheet",
+                "kraken2", "minimap2", "minimap2-sample-sheet",
                 "kraken2-bam", "minimap2-bam"]
 
     rules:
@@ -53,20 +53,15 @@ docker-run:
           NF_PROCESS_FILES: "wf-metagenomics/subworkflows/kraken_pipeline.nf"
           NF_WORKFLOW_OPTS: "--fastq test_data/case01 --classifier kraken2 --include_read_assignments"
           NF_IGNORE_PROCESSES: ""
-     # In wf-metagenomics, the wf runs indefinitely if there is no condition to stop it.
-     # With the read limit we can stop the wf if the limit is reached.
-     # It creates a STOP.fastq.gz that will be a new input in the wf and make it stop.
-     # Use the creation of this file to test if watch_path is able to detect new input files.
-     - if: $MATRIX_NAME == "kraken2-real-time"
-       variables:
-          NF_PROCESS_FILES: "wf-metagenomics/subworkflows/real_time_pipeline.nf"
-          NF_WORKFLOW_OPTS: "--fastq test_data/case01 --real_time --read_limit 3000 --include_read_assignments --batch_size 1000 --classifier kraken2"
-          NF_IGNORE_PROCESSES: ""
+          AFTER_NEXTFLOW_CMD: >
+            if [ ! -f $$PWD/$$CI_PROJECT_NAME/wf-16s-report.html ]; then (echo -e "Report not found" && exit 1); fi
      - if: $MATRIX_NAME == "minimap2"
        variables:
           NF_PROCESS_FILES: "wf-metagenomics/subworkflows/minimap_pipeline.nf"
           NF_WORKFLOW_OPTS: "--fastq test_data/case01 --minimap2_by_reference --keep_bam"
           NF_IGNORE_PROCESSES: "extractMinimap2Reads"
+          AFTER_NEXTFLOW_CMD: >
+            if [ ! -f $$PWD/$$CI_PROJECT_NAME/wf-16s-report.html ]; then (echo -e "Report not found" && exit 1); fi
      - if: $MATRIX_NAME == "minimap2-sample-sheet"
        variables:
           NF_PROCESS_FILES: "wf-metagenomics/subworkflows/minimap_pipeline.nf"

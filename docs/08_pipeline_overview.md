@@ -1,8 +1,18 @@
+
+### Workflow defaults and parameters
+The workflow sets default values for parameters optimised for the analysis of full-length 16S rRNA gene amplicons, including `min_len`, `max_len`, `min_ref_coverage`, and `min_percent_identity`.
+Descriptions of the parameters and their defaults can be found in the [input parameters section](#input-parameters).
+
+#### Analysing ITS amplicons
+For analysis of ITS amplicons users should adjust the following parameters:
+- `min_len` should be decreased to 300, as ITS amplicons may be shorter than the current `min_len` default value which will cause them to be excluded.
+- `database_set` should be changed to `ncbi_16s_18s_28s_ITS` or a [custom database](#faqs) containing the relevant ITS references.
+
 ### 1. Concatenate input files and generate per read stats
 
 [fastcat](https://github.com/epi2me-labs/fastcat) is used to concatenate input FASTQ files prior to downstream processing of the workflow. It will also output per-read stats including read lengths and average qualities.
 
-You may want to choose which reads are analysed by filtering them using these flags `max_len`, `min_len`, `min_read_qual`, (see the [Inputs section](#advanced-options) for details).
+You may want to choose which reads are analysed by filtering them using the flags `max_len`, `min_len` and `min_read_qual`.
 
 ### 2. Remove host sequences (optional)
 
@@ -18,7 +28,7 @@ There are two different approaches to taxonomic classification:
 
 #### 3.1 Using Minimap2
 
-[Minimap2](https://github.com/lh3/minimap2) provides better resolution, but, depending on the reference database used, can take significantly more time. Also, running the workflow with minimap2 does not support real-time analysis. This is the option by default.
+[Minimap2](https://github.com/lh3/minimap2) provides better resolution, but, depending on the reference database used, can take significantly more time. This is the option by default.
 
 ```
 nextflow run epi2me-labs/wf-16s --fastq test_data/case01 --classifier minimap2
@@ -30,16 +40,17 @@ In addition, the user can output BAM files in a folder called `bams` by using th
 
 #### 3.2 Using Kraken2
 
-[Kraken2](https://github.com/DerrickWood/kraken2) provides the fastest method for the taxonomic classification of the reads. Then, [Bracken](https://github.com/jenniferlu717/Bracken) is used to provide an estimate of the species (or the selected taxonomic rank) abundance in the sample.
+[Kraken2](https://github.com/DerrickWood/kraken2) provides the fastest method for the taxonomic classification of the reads. Then, [Bracken](https://github.com/jenniferlu717/Bracken) is used to provide an estimate of the genus (or the selected taxonomic rank) abundance in the sample.
 
-### 4. Prepare output
+### 4. Output
 
 The main output of the wf-16s pipeline is the `wf-16s-report.html` which can be found in the output directory. It contains a summary of read statistics, the taxonomic composition of the sample and some diversity metrics. The results shown in the report can also be customised with several options. For example, you can use `abundance_threshold` to remove all taxa less prevalent than the threshold from the abundance table. When setting this parameter to a natural number, taxa with fewer absolute counts are removed. You can also pass a decimal between 0.0-1.0 to drop taxa of lower relative abundance. Furthermore, `n_taxa_barplot` controls the number of taxa displayed in the bar plot and groups the rest under the category ‘Other’.
 
-The workflow output also contains Kraken and bracken reports for each sample. Additionally, the ‘species-abundance.tsv’ is a table with the counts of the different taxa per sample. You can use the flag `include_kraken2_assignments` to include a per sample TSV file that indicates how each input sequence was classified as well as the taxon that has been assigned to each read. This TSV file will only be output on completion of the workflow and therefore not at all if using the real time option whilst running indefinitely. This option is available in the Kraken2 pipeline.
+You can use the flag `include_read_assignments` to include a per-sample TSV file that indicates how each input sequence was classified, as well as the taxon that has been assigned to each read.
 
+For more information about remaining workflow outputs, please see [minimap2 Options](#minimap2-options).
 
-#### 5. Diversity indices
+### 5. Diversity indices
 
 Species diversity refers to the taxonomic composition in a specific microbial community. There are some useful concepts to take into account:
 * Richness: number of unique taxonomic groups present in the community,
@@ -92,29 +103,3 @@ These indices are calculated by default using the original abundance table (see 
 The report also includes the rarefaction curve per sample which displays the mean of species richness for a subsample of reads (sample size). Generally, this curve initially grows rapidly, as most abundant species are sequenced and they add new taxa in the community, then slightly flattens due to the fact that 'rare' species are more difficult of being sampled, and because of that is more difficult to report an increase in the number of observed species.
 
 > Note: Within each rank, each named taxon is a unique unit. The counts are the number of reads assigned to that taxon. All `Unknown` sequences are considered as a unique taxon
-
-
-### 6. Running wf-16s in real time
-
-> This feature is only available when using Kraken2 as the classifier. It is somewhat experimental and may not work as expected in all environments.
-
-The Kraken2 mode of the workflow can be used in real-time, allowing the workflow to run parallel with an ongoing sequencing run as read data is being produced by the Oxford Nanopore Technologies sequencing instrument. In this case, [Kraken2](https://github.com/DerrickWood/kraken2) is used with the [Kraken2-server](https://github.com/epi2me-labs/kraken2-server) and the user can visualise the classification of reads and species abundances in a real-time updating report.
-In real-time mode, the workflow processes new input files as they become available in batches of the specified size. Thus, this option cannot be used with a single fastq as input.
-
-When using the workflow in real-time, the workflow will run indefinitely until a user interrupts the program (e.g with `ctrl+c` when on the command line). The workflow can be configured to complete automatically after a set number of reads have been analysed using the `read_limit` variable. Once this threshold has been reached, the program will emit a `STOP.fastq.gz` file into the fastq directory, which will instruct the workflow to complete. The "STOP.fastq.gz" file is then deleted.
-
-```
-nextflow run epi2me-labs/wf-16s --fastq test_data/case01 --real_time --batch_size 1000 --read_limit 4000
-```
-
-If running the Kraken2 pipeline **real_time** in a cluster, there are two options to enable the workflow to be able to communicate with the Kraken-server: 
-
-1. Run a Kraken-server separately outside of the workflow.
-2. Submit the workflow job to run on a single node (i.e. running as if on a single local machine).
-
-The real-time subworkflow uses a server process to handle Kraken2 classification requests. This allows the workflow to persist the sequence database in memory throughout the duration of processing. There are some parameters that may be worth considering to improve the performance of the workflow:
-+ port: The option specifies the local network port on which the server and clients will communicate.
-+ host: Network hostname (or IP address) for communication between Kraken2 server and clients. (See also external_kraken2 parameter).
-+ external_kraken2: Whether a pre-existing Kraken2 server should be used, rather than creating one as part of the workflow. By default the workflow assumes that it is running on a single host computer, and further that it should start its own Kraken2 server. It may be desirable to start a Kraken2 server outside of the workflow (for example to host a large database), in which case this option should be enabled. This option may be used in conjuction with the host option to specify that the Kraken2 server is running on a remote computer.
-+ server_threads: Number of CPU threads used by the Kraken2 server for classifying reads.
-+ kraken_clients: Number of clients that can connect at once to the Kraken-server for classifying reads. It should not be set to more than 4 fewer than the executor CPU limit.
