@@ -4,7 +4,7 @@ If your question is not answered here, please report any issues or suggestions o
 
 + *Are more databases available?* - Other 16s databases (listed below) can be selected with the `database_set` parameter, but the workflow can also be used with a custom database if required (see [here](https://labs.epi2me.io/how-to-meta-offline/) for details).
     * 16S, 18S, ITS
-        * ncbi_16s_18s and ncbi_16s_18s_28s_ITS:  Archaeal, bacterial and fungal 16S/18S and ITS data. There are two databases available using the data from [NCBI]https://www.ncbi.nlm.nih.gov/refseq/targetedloci/)
+        * ncbi_16s_18s and ncbi_16s_18s_28s_ITS:  Archaeal, bacterial and fungal 16S/18S and ITS data. There are two databases available using the data from [NCBI](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/)
         * SILVA_138_1: The [SILVA](https://www.arb-silva.de/) database (version 138) is also available. Note that SILVA uses its own set of taxids, which do not match the NCBI taxids. We provide the respective taxdump files, but if you prefer using the NCBI ones, you can create them from the SILVA files ([NCBI](https://www.arb-silva.de/no_cache/download/archive/current/Exports/taxonomy/ncbi/)). As the SILVA database uses genus level, the last taxonomic rank at which the analysis is carried out is genus (`taxonomic_rank G`).
 
 + *How can I use Kraken2 indexes?* - There are different databases available [here](https://benlangmead.github.io/aws-indexes/k2).
@@ -16,4 +16,5 @@ If your question is not answered here, please report any issues or suggestions o
 
 + *How can I run the workflow offline?* - To run wf-16s offline you can use the workflow to download the databases from the internet and prepare them for offline re-use later. If you want to use one of the databases supported out of the box by the workflow, you can run the workflow with your desired database and any input (for example, the test data). The database will be downloaded and prepared in a directory on your computer. Once the database has been prepared, it will be used automatically the next time you run the workflow without needing to be downloaded again. You can find advice on picking a suitable database in our [article on selecting databases for wf-metagenomics](https://labs.epi2me.io/metagenomic-databases/).
 
-+ *Is it possible to run the real time approach in the cloud?* - No, the real time pipeline is not yet available to be run in the cloud.
++ *When and how are coverage and identity filters applied when using the minimap2 approach?* - With minimap2-based classification, coverage and identity filtering is applied by using the `min_ref_coverage` and `min_percent_identity` options respectively. All reads that mapped to a reference, but failed to pass these filters, are relabelled as unclassified. If the `include_read_assignments` option is used, tables in the output will show read classifications after this filtering step. However, the output BAM file always contains the raw minimap2 alignment results. To read more about both filters, see [minimap2 Options](#minimap2-options).
+

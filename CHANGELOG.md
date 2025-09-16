@@ -5,6 +5,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.6.0]
+This release of wf-16s updates documentation to include guidance for analysis of ITS amplicons with the SQK-MAB114 kit. Additionally, this version of wf-16s fixes issues with missing files and division by zero, which were triggered when input data coverage was very low. This release removes the real time analysis options to simplify the workflow; new solutions for real time taxonomic classification are in development but users who wish to continue using this functionality will need to pin wf-16s to v1.5.0.
+### Changed
+- Update wf-metagenomics to [v2.14.0](https://github.com/epi2me-labs/wf-metagenomics/blob/master/CHANGELOG.md#v2140):
+    - Update wf-template to v5.6.2, which changes:
+        - Reduce verbosity of debug logging from fastcat which can occasionally occlude errors found in FASTQ files during ingress.
+        - Log banner art to say "EPI2ME" instead of "EPI2ME Labs" to match current branding. This has no effect on the workflow outputs.
+        - pre-commit configuration to resolve an internal dependency problem with flake8. This has no effect on the workflow.
+    - Values in the diversity table appear as None if there are no reads in the sample.
+    - Values in the abundance table are now integers instead of floats.
+    - Samples with fewer than 50% of the median read count across all samples are excluded from the rarefaction table. This is to avoid the rest of the samples being rarefied to a very low number of reads, which would lead to a loss of information.
+### Added
+- Section in the README about presets for analysing ITS sequencing.
+### Fixed
+- Update to wf-metagenomics [v2.14.0](https://github.com/epi2me-labs/wf-metagenomics/blob/master/CHANGELOG.md#v2140):
+    - Update wf-template to v5.6.2, which fixes:
+        - Sequence summary read length N50 incorrectly displayed minimum read length, it now correctly shows the N50.
+        - Sequence summary component alignment and coverage plots failed to plot under some conditions.
+    - Missing output file containing per-read assignments after identity and coverage filters when using include_read_assignments with the minimap2 subworkflow; this table is now correctly published to {alias}_lineages.minimap2.assignments.tsv.
+    - Missing output file(s) encountered in the prepare_databases:determine_bracken_length process when using the bracken_length option.
+    - Missing output file(s) encountered in the minimap_pipeline:getAlignmentStats process when all reads are unclassified.
+    - pandas.errors.EmptyDataError encountered in the getAlignmentStats process when reference coverage does not reach 1x
+    - ZeroDivisionError: division by zero encountered in the progressive_bracken process when there are no taxa identified at all.
+    - Versions of some tools were not properly displayed in the report.
+    - raise ValueError("All objects passed were None") caused by all samples containing zero classified reads after applying bracken threshold.
+
+### Removed
+- Real time functionality has been removed to simplify the workflow. The following parameters have been removed as they are no longer required: `server_threads`, `kraken_clients`, `port`, `host`, `external_kraken2`, `batch_size`, `real_time`, `read_limit`. Using these parameters in v1.6.0 onwards will cause an error.
+ - Update image to remove kraken2-server dependency as it was only required by the real time workflow.
+
 ## [v1.5.0]
 ### Changed
 - Bump to wf-metagenomics v2.13.0
@@ -12,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Reconciled workflow with wf-template v5.5.0.
     - Fix error: bracken-build: line 231: syntax error: unexpected end of file when using SILVA database.
 ### Added
-- `output_unclassified` parameter.  When True, output unclassified FASTQ sequences for both minimap2 and kraken2 modes (default: False).
+- `output_unclassified` parameter. When True, output unclassified FASTQ sequences for both minimap2 and kraken2 modes (default: False).
 - Table with alignment stats is now an output: alignment_tables/{{ alias }}.alignment-stats.tsv
 
 ## [v1.4.0]

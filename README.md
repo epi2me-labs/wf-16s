@@ -1,4 +1,4 @@
-# 16s workflow
+# 16S rRNA
 
 Taxonomic classification of 16S rRNA gene sequencing data.
 
@@ -8,9 +8,12 @@ Taxonomic classification of 16S rRNA gene sequencing data.
 
 This workflow can be used for the following:
 
-+ Taxonomic classification of 16S rDNA and 18S rDNA amplicons using [default or custom databases](#FAQs). Default databases:
++ Taxonomic classification of 16S rRNA, 18S rRNA and ITS amplicons using [default or custom databases](#faqs). Default databases:
     - NCBI targeted loci: 16S rDNA, 18S rDNA, ITS (ncbi_16s_18s, ncbi_16s_18s_28s_ITS; see [here](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/) for details).
 + Generate taxonomic profiles of one or more samples.
+
+The workflow default parameters are optimised for analysis of 16S rRNA gene amplicons.
+For ITS amplicons, it is strongly recommended that some parameters are changed from the defaults, please see the [ITS presets](#analysing-its-amplicons) section for more information.
 
 Additional features:
 + Two different approaches are available: `minimap2` (using alignment, default option) or `kraken2` (k-mer based).
@@ -54,7 +57,7 @@ therefore Nextflow will need to be
 installed before attempting to run the workflow.
 
 The workflow can currently be run using either
-[Docker](https://www.docker.com/products/docker-desktop)
+[Docker](https://docs.docker.com/get-started/)
 or [Singularity](https://docs.sylabs.io/guides/3.0/user-guide/index.html)
 to provide isolation of the required software.
 Both methods are automated out-of-the-box provided
@@ -104,9 +107,10 @@ the command line see https://labs.epi2me.io/wfquickstart/
 
 ## Related protocols
 
-This workflow is designed to take input sequences that have been produced from [Oxford Nanopore Technologies](https://nanoporetech.com/) devices using this protocol:
+This workflow is designed to take input sequences that have been produced by [Oxford Nanopore Technologies](https://nanoporetech.com/) devices using protocols associated with either of the kits listed below:
 
-https://community.nanoporetech.com/docs/prepare/library_prep_protocols/rapid-sequencing-DNA-16s-barcoding-kit-v14-sqk-16114-24
+- [SQK-MAB114.24](https://nanoporetech.com/document/microbial-amplicon-barcoding-sequencing-for-16s-and-its-sqk-mab114-24)
+- [SQK-16S114.24](https://community.nanoporetech.com/docs/prepare/library_prep_protocols/rapid-sequencing-DNA-16s-barcoding-kit-v14-sqk-16114-24)
 
 Find related protocols in the [Nanopore community](https://community.nanoporetech.com/docs/).
 
@@ -147,26 +151,12 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 | exclude_host | string | A FASTA or MMI file of the host reference. Reads that align with this reference will be excluded from the analysis. |  |  |
 
 
-### Real Time Analysis Options
-
-| Nextflow parameter name  | Type | Description | Help | Default |
-|--------------------------|------|-------------|------|---------|
-| real_time | boolean | Enable to continuously watch the input directory for new input files. Reads will be analysed as they appear | This option enables the use of Nextflow’s directory watching feature to constantly monitor input directories for new files. As soon as files are written by an external process Nextflow will begin analysing these files. The workflow will accumulate data over time to produce an updating report. | False |
-| batch_size | integer | Maximum number of sequence records to process in a batch. | Large files will be split such that batch_size records are processed together. Set to 0 to avoid rebatching input files. A value of 32000 is recommended to rebatch large files. | 0 |
-| read_limit | integer | Stop processing data when a particular number of reads have been analysed. By default the workflow will run indefinitely. | Sets the upper bound on the number of reads that will be analysed before the workflow is automatically stopped and no more data is analysed. |  |
-| port | integer | Network port for communication between Kraken2 server and clients (available in real time  pipeline). | The workflow uses a server process to handle Kraken2 classification requests. This allows the workflow to persist the sequence database in memory throughout the duration of processing. The option specifies the local network port on which the server and clients will communicate. | 8080 |
-| host | string | Network hostname (or IP address) for communication between Kraken2 server and clients. (See also 'external_kraken2' parameter). (Available in real time  pipeline). | The workflow uses a server process to handle Kraken2 classification requests. This allows the workflow to persist the sequence database in memory throughout the duration of processing. The option specifies the local network hostname (or IP address) of the Kraken server. | localhost |
-| external_kraken2 | boolean | Whether a pre-existing Kraken2 server should be used, rather than creating one as part of the workflow. (Available in real time  pipeline). | By default the workflow assumes that it is running on a single host computer, and further that it should start its own Kraken2 server. It may be desirable to start a Kraken2 server outside of the workflow, in which case this option should be enabled. This option may be used in conjunction with the `host` option to specify that the Kraken2 server is running on a remote computer.  | False |
-| server_threads | integer | Number of CPU threads used by the Kraken2 server for classifying reads. (Available in the real_time pipeline). | For the real-time Kraken2 workflow, this is the number of CPU threads used by the Kraken2 server for classifying reads. | 2 |
-| kraken_clients | integer | Number of clients that can connect at once to the Kraken-server for classifying reads. (Available in the real_time pipeline). | For the real-time Kraken2 workflow, this is the number of clients sending reads to the server. It should not be set to more than 4 fewer than the executor CPU limit. | 2 |
-
-
 ### Sample Options
 
 | Nextflow parameter name  | Type | Description | Help | Default |
 |--------------------------|------|-------------|------|---------|
-| sample_sheet | string | A CSV file used to map barcodes to sample aliases. The sample sheet can be provided when the input data is a directory containing sub-directories with FASTQ files. Disabled in the real time pipeline. | The sample sheet is a CSV file with, minimally, columns named `barcode`,`alias`. Extra columns are allowed. |  |
-| sample | string | A single sample name for non-multiplexed data. Permissible if passing a single .fastq(.gz) file or directory of .fastq(.gz) files. Disabled in the real time pipeline. |  |  |
+| sample_sheet | string | A CSV file used to map barcodes to sample aliases. The sample sheet can be provided when the input data is a directory containing sub-directories with FASTQ files. | The sample sheet is a CSV file with, minimally, columns named `barcode`,`alias`. Extra columns are allowed. |  |
+| sample | string | A single sample name for non-multiplexed data. Permissible if passing a single .fastq(.gz) file or directory of .fastq(.gz) files. |  |  |
 
 
 ### Reference Options
@@ -217,7 +207,7 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 |--------------------------|------|-------------|------|---------|
 | out_dir | string | Directory for output of all user-facing files. |  | output |
 | igv | boolean | Enable IGV visualisation in the EPI2ME Desktop Application by creating the required files. This will cause the workflow to emit the BAM files as well. If using a custom reference, this must be a FASTA file and not a minimap2 MMI format index. |  | False |
-| include_read_assignments | boolean | A per-sample TSV file that indicates the taxonomy assigned to each sequence. These will only be output on completion of the workflow. If using the real time option, these files will not be output. |  | False |
+| include_read_assignments | boolean | A per-sample TSV file that indicates the taxonomy assigned to each sequence. These will only be output on completion of the workflow. |  | False |
 | output_unclassified | boolean | Output a FASTQ of the unclassified reads. |  | False |
 
 
@@ -228,7 +218,7 @@ input_reads.fastq   ─── input_directory  ─── input_directory
 | min_len | integer | Specify read length lower limit. | Any reads shorter than this limit will not be included in the analysis. | 800 |
 | min_read_qual | number | Specify read quality lower limit. | Any reads with a quality lower than this limit will not be included in the analysis. |  |
 | max_len | integer | Specify read length upper limit | Any reads longer than this limit will not be included in the analysis. | 2000 |
-| threads | integer | Maximum number of CPU threads to use in each parallel workflow task. | Several tasks in this workflow benefit from using multiple CPU threads. This option sets the number of CPU threads for all such processes. See server threads parameter for Kraken specific threads in the real_time pipeline. | 4 |
+| threads | integer | Maximum number of CPU threads to use in each parallel workflow task. | Several tasks in this workflow benefit from using multiple CPU threads. This option sets the number of CPU threads for all such processes. | 4 |
 
 
 
@@ -266,11 +256,21 @@ Output files may be aggregated including information for all samples or provided
 
 ## Pipeline overview
 
+
+### Workflow defaults and parameters
+The workflow sets default values for parameters optimised for the analysis of full-length 16S rRNA gene amplicons, including `min_len`, `max_len`, `min_ref_coverage`, and `min_percent_identity`.
+Descriptions of the parameters and their defaults can be found in the [input parameters section](#input-parameters).
+
+#### Analysing ITS amplicons
+For analysis of ITS amplicons users should adjust the following parameters:
+- `min_len` should be decreased to 300, as ITS amplicons may be shorter than the current `min_len` default value which will cause them to be excluded.
+- `database_set` should be changed to `ncbi_16s_18s_28s_ITS` or a [custom database](#faqs) containing the relevant ITS references.
+
 ### 1. Concatenate input files and generate per read stats
 
 [fastcat](https://github.com/epi2me-labs/fastcat) is used to concatenate input FASTQ files prior to downstream processing of the workflow. It will also output per-read stats including read lengths and average qualities.
 
-You may want to choose which reads are analysed by filtering them using these flags `max_len`, `min_len`, `min_read_qual`, (see the [Inputs section](#advanced-options) for details).
+You may want to choose which reads are analysed by filtering them using the flags `max_len`, `min_len` and `min_read_qual`.
 
 ### 2. Remove host sequences (optional)
 
@@ -286,7 +286,7 @@ There are two different approaches to taxonomic classification:
 
 #### 3.1 Using Minimap2
 
-[Minimap2](https://github.com/lh3/minimap2) provides better resolution, but, depending on the reference database used, can take significantly more time. Also, running the workflow with minimap2 does not support real-time analysis. This is the option by default.
+[Minimap2](https://github.com/lh3/minimap2) provides better resolution, but, depending on the reference database used, can take significantly more time. This is the option by default.
 
 ```
 nextflow run epi2me-labs/wf-16s --fastq test_data/case01 --classifier minimap2
@@ -298,16 +298,17 @@ In addition, the user can output BAM files in a folder called `bams` by using th
 
 #### 3.2 Using Kraken2
 
-[Kraken2](https://github.com/DerrickWood/kraken2) provides the fastest method for the taxonomic classification of the reads. Then, [Bracken](https://github.com/jenniferlu717/Bracken) is used to provide an estimate of the species (or the selected taxonomic rank) abundance in the sample.
+[Kraken2](https://github.com/DerrickWood/kraken2) provides the fastest method for the taxonomic classification of the reads. Then, [Bracken](https://github.com/jenniferlu717/Bracken) is used to provide an estimate of the genus (or the selected taxonomic rank) abundance in the sample.
 
-### 4. Prepare output
+### 4. Output
 
 The main output of the wf-16s pipeline is the `wf-16s-report.html` which can be found in the output directory. It contains a summary of read statistics, the taxonomic composition of the sample and some diversity metrics. The results shown in the report can also be customised with several options. For example, you can use `abundance_threshold` to remove all taxa less prevalent than the threshold from the abundance table. When setting this parameter to a natural number, taxa with fewer absolute counts are removed. You can also pass a decimal between 0.0-1.0 to drop taxa of lower relative abundance. Furthermore, `n_taxa_barplot` controls the number of taxa displayed in the bar plot and groups the rest under the category ‘Other’.
 
-The workflow output also contains Kraken and bracken reports for each sample. Additionally, the ‘species-abundance.tsv’ is a table with the counts of the different taxa per sample. You can use the flag `include_kraken2_assignments` to include a per sample TSV file that indicates how each input sequence was classified as well as the taxon that has been assigned to each read. This TSV file will only be output on completion of the workflow and therefore not at all if using the real time option whilst running indefinitely. This option is available in the Kraken2 pipeline.
+You can use the flag `include_read_assignments` to include a per-sample TSV file that indicates how each input sequence was classified, as well as the taxon that has been assigned to each read.
 
+For more information about remaining workflow outputs, please see [minimap2 Options](#minimap2-options).
 
-#### 5. Diversity indices
+### 5. Diversity indices
 
 Species diversity refers to the taxonomic composition in a specific microbial community. There are some useful concepts to take into account:
 * Richness: number of unique taxonomic groups present in the community,
@@ -362,32 +363,6 @@ The report also includes the rarefaction curve per sample which displays the mea
 > Note: Within each rank, each named taxon is a unique unit. The counts are the number of reads assigned to that taxon. All `Unknown` sequences are considered as a unique taxon
 
 
-### 6. Running wf-16s in real time
-
-> This feature is only available when using Kraken2 as the classifier. It is somewhat experimental and may not work as expected in all environments.
-
-The Kraken2 mode of the workflow can be used in real-time, allowing the workflow to run parallel with an ongoing sequencing run as read data is being produced by the Oxford Nanopore Technologies sequencing instrument. In this case, [Kraken2](https://github.com/DerrickWood/kraken2) is used with the [Kraken2-server](https://github.com/epi2me-labs/kraken2-server) and the user can visualise the classification of reads and species abundances in a real-time updating report.
-In real-time mode, the workflow processes new input files as they become available in batches of the specified size. Thus, this option cannot be used with a single fastq as input.
-
-When using the workflow in real-time, the workflow will run indefinitely until a user interrupts the program (e.g with `ctrl+c` when on the command line). The workflow can be configured to complete automatically after a set number of reads have been analysed using the `read_limit` variable. Once this threshold has been reached, the program will emit a `STOP.fastq.gz` file into the fastq directory, which will instruct the workflow to complete. The "STOP.fastq.gz" file is then deleted.
-
-```
-nextflow run epi2me-labs/wf-16s --fastq test_data/case01 --real_time --batch_size 1000 --read_limit 4000
-```
-
-If running the Kraken2 pipeline **real_time** in a cluster, there are two options to enable the workflow to be able to communicate with the Kraken-server: 
-
-1. Run a Kraken-server separately outside of the workflow.
-2. Submit the workflow job to run on a single node (i.e. running as if on a single local machine).
-
-The real-time subworkflow uses a server process to handle Kraken2 classification requests. This allows the workflow to persist the sequence database in memory throughout the duration of processing. There are some parameters that may be worth considering to improve the performance of the workflow:
-+ port: The option specifies the local network port on which the server and clients will communicate.
-+ host: Network hostname (or IP address) for communication between Kraken2 server and clients. (See also external_kraken2 parameter).
-+ external_kraken2: Whether a pre-existing Kraken2 server should be used, rather than creating one as part of the workflow. By default the workflow assumes that it is running on a single host computer, and further that it should start its own Kraken2 server. It may be desirable to start a Kraken2 server outside of the workflow (for example to host a large database), in which case this option should be enabled. This option may be used in conjuction with the host option to specify that the Kraken2 server is running on a remote computer.
-+ server_threads: Number of CPU threads used by the Kraken2 server for classifying reads.
-+ kraken_clients: Number of clients that can connect at once to the Kraken-server for classifying reads. It should not be set to more than 4 fewer than the executor CPU limit.
-
-
 
 
 ## Troubleshooting
@@ -409,7 +384,7 @@ If your question is not answered here, please report any issues or suggestions o
 
 + *Are more databases available?* - Other 16s databases (listed below) can be selected with the `database_set` parameter, but the workflow can also be used with a custom database if required (see [here](https://labs.epi2me.io/how-to-meta-offline/) for details).
     * 16S, 18S, ITS
-        * ncbi_16s_18s and ncbi_16s_18s_28s_ITS:  Archaeal, bacterial and fungal 16S/18S and ITS data. There are two databases available using the data from [NCBI]https://www.ncbi.nlm.nih.gov/refseq/targetedloci/)
+        * ncbi_16s_18s and ncbi_16s_18s_28s_ITS:  Archaeal, bacterial and fungal 16S/18S and ITS data. There are two databases available using the data from [NCBI](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/)
         * SILVA_138_1: The [SILVA](https://www.arb-silva.de/) database (version 138) is also available. Note that SILVA uses its own set of taxids, which do not match the NCBI taxids. We provide the respective taxdump files, but if you prefer using the NCBI ones, you can create them from the SILVA files ([NCBI](https://www.arb-silva.de/no_cache/download/archive/current/Exports/taxonomy/ncbi/)). As the SILVA database uses genus level, the last taxonomic rank at which the analysis is carried out is genus (`taxonomic_rank G`).
 
 + *How can I use Kraken2 indexes?* - There are different databases available [here](https://benlangmead.github.io/aws-indexes/k2).
@@ -421,7 +396,8 @@ If your question is not answered here, please report any issues or suggestions o
 
 + *How can I run the workflow offline?* - To run wf-16s offline you can use the workflow to download the databases from the internet and prepare them for offline re-use later. If you want to use one of the databases supported out of the box by the workflow, you can run the workflow with your desired database and any input (for example, the test data). The database will be downloaded and prepared in a directory on your computer. Once the database has been prepared, it will be used automatically the next time you run the workflow without needing to be downloaded again. You can find advice on picking a suitable database in our [article on selecting databases for wf-metagenomics](https://labs.epi2me.io/metagenomic-databases/).
 
-+ *Is it possible to run the real time approach in the cloud?* - No, the real time pipeline is not yet available to be run in the cloud.
++ *When and how are coverage and identity filters applied when using the minimap2 approach?* - With minimap2-based classification, coverage and identity filtering is applied by using the `min_ref_coverage` and `min_percent_identity` options respectively. All reads that mapped to a reference, but failed to pass these filters, are relabelled as unclassified. If the `include_read_assignments` option is used, tables in the output will show read classifications after this filtering step. However, the output BAM file always contains the raw minimap2 alignment results. To read more about both filters, see [minimap2 Options](#minimap2-options).
+
 
 
 
@@ -430,6 +406,7 @@ If your question is not answered here, please report any issues or suggestions o
 
 + [How to build and use databases to run wf-metagenomics and wf-16s offline](https://labs.epi2me.io/how-to-meta-offline/).
 + [Selecting the correct databases in the wf-metagenomics](https://labs.epi2me.io/metagenomic-databases/).
++ [How to evaluate unclassified sequences](https://epi2me.nanoporetech.com/post-meta-analysis/)
 
 See the [EPI2ME website](https://labs.epi2me.io/) for lots of other resources and blog posts.
 

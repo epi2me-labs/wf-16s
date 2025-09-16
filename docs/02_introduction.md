@@ -1,8 +1,11 @@
 This workflow can be used for the following:
 
-+ Taxonomic classification of 16S rDNA and 18S rDNA amplicons using [default or custom databases](#FAQs). Default databases:
++ Taxonomic classification of 16S rRNA, 18S rRNA and ITS amplicons using [default or custom databases](#faqs). Default databases:
     - NCBI targeted loci: 16S rDNA, 18S rDNA, ITS (ncbi_16s_18s, ncbi_16s_18s_28s_ITS; see [here](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/) for details).
 + Generate taxonomic profiles of one or more samples.
+
+The workflow default parameters are optimised for analysis of 16S rRNA gene amplicons.
+For ITS amplicons, it is strongly recommended that some parameters are changed from the defaults, please see the [ITS presets](#analysing-its-amplicons) section for more information.
 
 Additional features:
 + Two different approaches are available: `minimap2` (using alignment, default option) or `kraken2` (k-mer based).
