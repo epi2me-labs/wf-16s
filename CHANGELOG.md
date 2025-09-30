@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+### Added
+- Links to available datasets in the documentation.
+
 ## [v1.6.0]
 This release of wf-16s updates documentation to include guidance for analysis of ITS amplicons with the SQK-MAB114 kit. Additionally, this version of wf-16s fixes issues with missing files and division by zero, which were triggered when input data coverage was very low. This release removes the real time analysis options to simplify the workflow; new solutions for real time taxonomic classification are in development but users who wish to continue using this functionality will need to pin wf-16s to v1.5.0.
 ### Changed
