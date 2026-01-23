@@ -10,6 +10,7 @@ This workflow can be used for the following:
 
 + Taxonomic classification of 16S rRNA, 18S rRNA and ITS amplicons using [default or custom databases](#faqs). Default databases:
     - NCBI targeted loci: 16S rDNA, 18S rDNA, ITS (ncbi_16s_18s, ncbi_16s_18s_28s_ITS; see [here](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/) for details).
+    - [Other available databases](#33-databases)
 + Generate taxonomic profiles of one or more samples.
 
 The workflow default parameters are optimised for analysis of 16S rRNA gene amplicons.
@@ -22,6 +23,11 @@ Additional features:
     - Interactive sankey and sunburst plots to explore the different identified lineages.
     - A bar plot comparing the abundances of the most abundant taxa in all the samples.
 
+
+<figure>
+<img src="docs/images/wf-16s.tube.svg" alt="wf-16s overview schematic."/>
+<figcaption>Schematic depicting wf-16s workflow.</figcaption>
+</figure>
 
 
 
@@ -135,6 +141,134 @@ input_reads.fastq   ─── input_directory  ─── input_directory
                                              └── barcode03
                                               └── reads0.fastq
 ```
+
+
+
+## Pipeline overview
+
+
+### Workflow defaults and parameters
+The workflow sets default values for parameters optimised for the analysis of full-length 16S rRNA gene amplicons, including `min_len`, `max_len`, `min_ref_coverage`, and `min_percent_identity`.
+Descriptions of the parameters and their defaults can be found in the [input parameters section](#input-parameters).
+
+#### Analysing ITS amplicons
+For analysis of ITS amplicons users should adjust the following parameters:
+- `min_len` should be decreased to 300, as ITS amplicons may be shorter than the current `min_len` default value which will cause them to be excluded.
+- `database_set` should be changed to `ncbi_16s_18s_28s_ITS` or a [custom database](#faqs) containing the relevant ITS references.
+
+### 1. Concatenate input files and generate per read stats
+
+[fastcat](https://github.com/epi2me-labs/fastcat) is used to concatenate input FASTQ files prior to downstream processing of the workflow. It will also output per-read stats including read lengths and average qualities.
+
+You may want to choose which reads are analysed by filtering them using the flags `max_len`, `min_len` and `min_read_qual`.
+
+### 2. Remove host sequences (optional)
+
+We have included an optional filtering step to remove any host sequences that map (using [Minimap2](https://github.com/lh3/minimap2)) against a provided host reference (e.g. human), which can be a FASTA file or a MMI index. To use this option provide the path to your host reference with the `exclude_host` parameter. The mapped reads are output in a BAM file and excluded from further analysis.
+
+```
+nextflow run epi2me-labs/wf-16s --fastq test_data/case04/reads.fastq.gz --exclude_host test_data/case04/host.fasta.gz
+```
+
+### 3. Classify reads taxonomically
+
+There are two different approaches to taxonomic classification:
+
+#### 3.1 Using Minimap2
+
+[Minimap2](https://github.com/lh3/minimap2) provides better resolution, but, depending on the reference database used, can take significantly more time. This is the option by default.
+
+```
+nextflow run epi2me-labs/wf-16s --fastq test_data/case01 --classifier minimap2
+```
+
+The creation of alignment statistics plots can be enabled with the `minimap2_by_reference` flag. Using this option produces a table and scatter plot in the report showing sequencing depth and coverage of each reference. The report also contains a heatmap indicating the sequencing depth over relative genomic coordinates for the references with the highest coverage (references with a mean coverage of less than 1% of the one with the largest value are omitted).
+
+In addition, the user can output BAM files in a folder called `bams` by using the option `keep_bam`. If the user provides a custom database and uses the `igv` option, the workflow will also output the references with reads mappings, as well as an IGV configuration file. This configuration file allows the user to view the alignments in the EPI2ME Desktop Application in the Viewer tab. Note that the number of references can be reduced using the `abundance_threshold` option, which will select those references with a number of reads aligned higher than this value. Please, consider that the view of the alignment is highly dependent on the reference selected.
+
+#### 3.2 Using Kraken2
+
+[Kraken2](https://github.com/DerrickWood/kraken2) provides the fastest method for the taxonomic classification of the reads. Then, [Bracken](https://github.com/jenniferlu717/Bracken) is used to provide an estimate of the genus (or the selected taxonomic rank) abundance in the sample.
+
+#### 3.3 Databases
+
+There are different taxonomic databases available, and custom databases can be provided.
+The available databases are:
+
+| Database | Content | References | Taxonomy DB | Pipeline |
+| -------- | ------- | -------------------------- | ----------- | -------- |
+| [ncbi_16s_18s](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/) | Archaeal, bacterial and fungal ribosomal RNA loci (16S rDNA, 18S rDNA (SSU)) | [Resources](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/) | [2025-01-01](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump_archive/)| Kraken2, minimap2 |
+| [ncbi_16s_18s_28s_ITS](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/) | Archaeal, bacterial and fungal  ribosomal RNA loci (16S rDNA, 18S rDNA (SSU), 28S rDNA (LSU) gene and internal transcribed spacer (ITS)) | [Resources](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/) | [2025-01-01](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump_archive/)| Kraken2, minimap2 |
+| [SILVA_138_1](https://www.arb-silva.de/) | aligned small (16S/18S, SSU) ribosomal RNA (rRNA) sequences for Bacteria, Archaea and Eukarya. Version 138.1. As the SILVA database doesn't exceed genus level, the lowest taxonomic rank available for analysis is genus (`taxonomic_rank G`)| [See Citation and License](https://www.arb-silva.de/archive/release_138_1) | SILVA uses its own set of taxids, which do not match the NCBI taxids. The respective taxdump files are provided (database has been made using [kraken2](https://github.com/DerrickWood/kraken2/wiki/Manual#special-databases)), but if NCBI taxids are required, you can create them from the SILVA files ([NCBI](https://www.arb-silva.de/no_cache/download/archive/current/Exports/taxonomy/ncbi/)) | Kraken2, minimap2 |
+| [Greengenes2_plus](https://forum.qiime2.org/t/greengenes2-2024-09/31606) | [Greengenes2 database release 2024.09](https://forum.qiime2.org/t/greengenes2-2024-09/31606), supplemented with *Salmonella enterica* and *Sarcina perfringens* reference sequences from [GTDB release 226](https://gtdb.ecogenomic.org/stats/r226) used in the [ZymoBIOMICS Microbial Communities with 16S dataset blog post](https://epi2me.nanoporetech.com/zymo_16s_2025.09/) | [Greengenes2 Citation](https://greengenes2.ucsd.edu/), [Greengenes2 License](https://ftp.microbio.me/greengenes_release/current/00LICENSE) | Custom taxonomy DB | Kraken2, minimap2 |
+| [Standard-8](https://benlangmead.github.io/aws-indexes/k2) | Refseq archaea, bacteria, viral, plasmid, human1, UniVec_Core capped at 8 GB | [More Information](https://benlangmead.github.io/aws-indexes/k2#older-minikraken-indexes) | [2025-01-01](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump_archive/) | Kraken2 |
+| [PlusPF-8](https://benlangmead.github.io/aws-indexes/k2) | Standard plus Refseq protozoa & fungi capped at 8 GB | [More Information](https://benlangmead.github.io/aws-indexes/k2#older-minikraken-indexes) | [2025-01-01](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump_archive/) | Kraken2 |
+| [PlusPFP-8](https://benlangmead.github.io/aws-indexes/k2) | Standard plus Refseq protozoa, fungi & plant capped at 8 GB | [More Information](https://benlangmead.github.io/aws-indexes/k2#older-minikraken-indexes)| [2025-01-01](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump_archive/)| Kraken2 |
+
+See our [blog post](https://labs.epi2me.io/how-to-meta-offline/) for details on how to build and use a custom database.
+
+### 4. Output
+
+The main output of the wf-16s pipeline is the `wf-16s-report.html` which can be found in the output directory. It contains a summary of read statistics, the taxonomic composition of the sample and some diversity metrics. The results shown in the report can also be customised with several options. For example, you can use `abundance_threshold` to remove all taxa less prevalent than the threshold from the abundance table. When setting this parameter to a natural number, taxa with fewer absolute counts are removed. You can also pass a decimal between 0.0-1.0 to drop taxa of lower relative abundance. Furthermore, `n_taxa_barplot` controls the number of taxa displayed in the bar plot and groups the rest under the category ‘Other’.
+
+You can use the flag `include_read_assignments` to include a per-sample TSV file that indicates how each input sequence was classified, as well as the taxon that has been assigned to each read.
+
+For more information about remaining workflow outputs, please see [minimap2 Options](#minimap2-options).
+
+### 5. Diversity indices
+
+Species diversity refers to the taxonomic composition in a specific microbial community. There are some useful concepts to take into account:
+* Richness: number of unique taxonomic groups present in the community,
+* Taxonomic group abundance: number of individuals of a particular taxonomic group present in the community,
+* Evenness: refers to the equitability of the different taxonomic groups in terms of their abundances.
+    Two different communities can host the same number of different taxonomic groups (i.e. they have the same richness), but they can have different evenness. For instance, if there is one taxon whose abundance is much larger in one community compared to the other.
+
+There are three types of biodiversity measures described over a special scale <sup>[1](https://doi.org/10.2307/1218190), [2](https://doi.org/10.1016/B978-0-12-384719-5.00036-8)</sup>: alpha-, beta-, and gamma-diversity.
+* Alpha-diversity refers to the richness that occurs within a community given area within a region.
+* Beta-diversity defined as variation in the identities of species among sites, provides a direct link between biodiversity at local scales (alpha diversity) and the broader regional species pool (gamma diversity).
+* Gamma-diversity is the total observed richness within an entire region.
+
+To provide a quick overview of the alpha-diversity of the microbial community, we provide some of the most common diversity metrics calculated for a specific taxonomic rank <sup>[3](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4224527/)</sup>, which can be chosen by the user with the `taxonomic_rank` parameter ('D'=Domain,'P'=Phylum, 'C'=Class, 'O'=Order, 'F'=Family, 'G'=Genus, 'S'=Species). By default, the rank is 'G' (genus-level). Some of the included alpha diversity metrics are:
+
+* Shannon Diversity Index (H): Shannon entropy approaches zero if a community is almost entirely made up of a single taxon.
+
+```math
+H = -\sum_{i=1}^{S}p_i*ln(p_i)
+```
+
+* Simpson's Diversity Index (D): The range is from 0 (low diversity) to 1 (high diversity).    
+
+```math
+D = \sum_{i=1}^{S}p_i^2
+```
+
+* Pielou Index (J): The values range from 0 (presence of a dominant species) and 1 (maximum evennes).    
+
+```math
+J = H/ln(S)
+```
+
+* Berger-Parker dominance index (BP): expresses the proportional importance of the most abundant type, i.e., the ratio of number of individuals of most abundant species to the total number of individuals of all the species in the sample.
+
+```math
+BP = n_i/N
+```
+   where n<sub>i</sub> refers to the counts of the most abundant taxon and N is the total of counts.     
+
+
+* Fisher’s alpha: Fisher (see Fisher, 1943<sup>[4](https://doi.org/10.2307/1411)</sup>) noticed that only a few species tend to be abundant while most are represented by only a few individuals ('rare biosphere'). These differences in species abundance can be incorporated into species diversity measurements such as the Fisher’s alpha. This index is based upon the logarithmic distribution of number of individuals of different species. 
+
+```math
+S = \alpha * ln(1 + N/\alpha)
+```
+   where S is the total number of taxa, N is the total number of individuals in the sample. The value of Fisher's $`\alpha`$ is calculated by iteration.
+
+These indices are calculated by default using the original abundance table (see McMurdie and Holmes<sup>[5](https://pubmed.ncbi.nlm.nih.gov/24699258/)</sup>, 2014 and Willis<sup>[6](https://www.frontiersin.org/articles/10.3389/fmicb.2019.02407/full)</sup>, 2019). If you want to calculate them from a rarefied abundance table (i.e. all the samples have been subsampled to contain the same number of counts per sample, which is the 95% of the minimum number of total counts), you can download the rarefied table from the report.
+
+The report also includes the rarefaction curve per sample which displays the mean of species richness for a subsample of reads (sample size). Generally, this curve initially grows rapidly, as most abundant species are sequenced and they add new taxa in the community, then slightly flattens due to the fact that 'rare' species are more difficult of being sampled, and because of that is more difficult to report an increase in the number of observed species.
+
+> Note: Within each rank, each named taxon is a unique unit. The counts are the number of reads assigned to that taxon. All `Unknown` sequences are considered as a unique taxon
+
 
 
 
@@ -254,117 +388,6 @@ Output files may be aggregated including information for all samples or provided
 
 
 
-## Pipeline overview
-
-
-### Workflow defaults and parameters
-The workflow sets default values for parameters optimised for the analysis of full-length 16S rRNA gene amplicons, including `min_len`, `max_len`, `min_ref_coverage`, and `min_percent_identity`.
-Descriptions of the parameters and their defaults can be found in the [input parameters section](#input-parameters).
-
-#### Analysing ITS amplicons
-For analysis of ITS amplicons users should adjust the following parameters:
-- `min_len` should be decreased to 300, as ITS amplicons may be shorter than the current `min_len` default value which will cause them to be excluded.
-- `database_set` should be changed to `ncbi_16s_18s_28s_ITS` or a [custom database](#faqs) containing the relevant ITS references.
-
-### 1. Concatenate input files and generate per read stats
-
-[fastcat](https://github.com/epi2me-labs/fastcat) is used to concatenate input FASTQ files prior to downstream processing of the workflow. It will also output per-read stats including read lengths and average qualities.
-
-You may want to choose which reads are analysed by filtering them using the flags `max_len`, `min_len` and `min_read_qual`.
-
-### 2. Remove host sequences (optional)
-
-We have included an optional filtering step to remove any host sequences that map (using [Minimap2](https://github.com/lh3/minimap2)) against a provided host reference (e.g. human), which can be a FASTA file or a MMI index. To use this option provide the path to your host reference with the `exclude_host` parameter. The mapped reads are output in a BAM file and excluded from further analysis.
-
-```
-nextflow run epi2me-labs/wf-16s --fastq test_data/case04/reads.fastq.gz --exclude_host test_data/case04/host.fasta.gz
-```
-
-### 3. Classify reads taxonomically
-
-There are two different approaches to taxonomic classification:
-
-#### 3.1 Using Minimap2
-
-[Minimap2](https://github.com/lh3/minimap2) provides better resolution, but, depending on the reference database used, can take significantly more time. This is the option by default.
-
-```
-nextflow run epi2me-labs/wf-16s --fastq test_data/case01 --classifier minimap2
-```
-
-The creation of alignment statistics plots can be enabled with the `minimap2_by_reference` flag. Using this option produces a table and scatter plot in the report showing sequencing depth and coverage of each reference. The report also contains a heatmap indicating the sequencing depth over relative genomic coordinates for the references with the highest coverage (references with a mean coverage of less than 1% of the one with the largest value are omitted).
-
-In addition, the user can output BAM files in a folder called `bams` by using the option `keep_bam`. If the user provides a custom database and uses the `igv` option, the workflow will also output the references with reads mappings, as well as an IGV configuration file. This configuration file allows the user to view the alignments in the EPI2ME Desktop Application in the Viewer tab. Note that the number of references can be reduced using the `abundance_threshold` option, which will select those references with a number of reads aligned higher than this value. Please, consider that the view of the alignment is highly dependent on the reference selected.
-
-#### 3.2 Using Kraken2
-
-[Kraken2](https://github.com/DerrickWood/kraken2) provides the fastest method for the taxonomic classification of the reads. Then, [Bracken](https://github.com/jenniferlu717/Bracken) is used to provide an estimate of the genus (or the selected taxonomic rank) abundance in the sample.
-
-### 4. Output
-
-The main output of the wf-16s pipeline is the `wf-16s-report.html` which can be found in the output directory. It contains a summary of read statistics, the taxonomic composition of the sample and some diversity metrics. The results shown in the report can also be customised with several options. For example, you can use `abundance_threshold` to remove all taxa less prevalent than the threshold from the abundance table. When setting this parameter to a natural number, taxa with fewer absolute counts are removed. You can also pass a decimal between 0.0-1.0 to drop taxa of lower relative abundance. Furthermore, `n_taxa_barplot` controls the number of taxa displayed in the bar plot and groups the rest under the category ‘Other’.
-
-You can use the flag `include_read_assignments` to include a per-sample TSV file that indicates how each input sequence was classified, as well as the taxon that has been assigned to each read.
-
-For more information about remaining workflow outputs, please see [minimap2 Options](#minimap2-options).
-
-### 5. Diversity indices
-
-Species diversity refers to the taxonomic composition in a specific microbial community. There are some useful concepts to take into account:
-* Richness: number of unique taxonomic groups present in the community,
-* Taxonomic group abundance: number of individuals of a particular taxonomic group present in the community,
-* Evenness: refers to the equitability of the different taxonomic groups in terms of their abundances.
-    Two different communities can host the same number of different taxonomic groups (i.e. they have the same richness), but they can have different evenness. For instance, if there is one taxon whose abundance is much larger in one community compared to the other.
-
-There are three types of biodiversity measures described over a special scale <sup>[1](https://doi.org/10.2307/1218190), [2](https://doi.org/10.1016/B978-0-12-384719-5.00036-8)</sup>: alpha-, beta-, and gamma-diversity.
-* Alpha-diversity refers to the richness that occurs within a community given area within a region.
-* Beta-diversity defined as variation in the identities of species among sites, provides a direct link between biodiversity at local scales (alpha diversity) and the broader regional species pool (gamma diversity).
-* Gamma-diversity is the total observed richness within an entire region.
-
-To provide a quick overview of the alpha-diversity of the microbial community, we provide some of the most common diversity metrics calculated for a specific taxonomic rank <sup>[3](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4224527/)</sup>, which can be chosen by the user with the `taxonomic_rank` parameter ('D'=Domain,'P'=Phylum, 'C'=Class, 'O'=Order, 'F'=Family, 'G'=Genus, 'S'=Species). By default, the rank is 'G' (genus-level). Some of the included alpha diversity metrics are:
-
-* Shannon Diversity Index (H): Shannon entropy approaches zero if a community is almost entirely made up of a single taxon.
-
-```math
-H = -\sum_{i=1}^{S}p_i*ln(p_i)
-```
-
-* Simpson's Diversity Index (D): The range is from 0 (low diversity) to 1 (high diversity).    
-
-```math
-D = \sum_{i=1}^{S}p_i^2
-```
-
-* Pielou Index (J): The values range from 0 (presence of a dominant species) and 1 (maximum evennes).    
-
-```math
-J = H/ln(S)
-```
-
-* Berger-Parker dominance index (BP): expresses the proportional importance of the most abundant type, i.e., the ratio of number of individuals of most abundant species to the total number of individuals of all the species in the sample.
-
-```math
-BP = n_i/N
-```
-   where n<sub>i</sub> refers to the counts of the most abundant taxon and N is the total of counts.     
-
-
-* Fisher’s alpha: Fisher (see Fisher, 1943<sup>[4](https://doi.org/10.2307/1411)</sup>) noticed that only a few species tend to be abundant while most are represented by only a few individuals ('rare biosphere'). These differences in species abundance can be incorporated into species diversity measurements such as the Fisher’s alpha. This index is based upon the logarithmic distribution of number of individuals of different species. 
-
-```math
-S = \alpha * ln(1 + N/\alpha)
-```
-   where S is the total number of taxa, N is the total number of individuals in the sample. The value of Fisher's $`\alpha`$ is calculated by iteration.
-
-These indices are calculated by default using the original abundance table (see McMurdie and Holmes<sup>[5](https://pubmed.ncbi.nlm.nih.gov/24699258/)</sup>, 2014 and Willis<sup>[6](https://www.frontiersin.org/articles/10.3389/fmicb.2019.02407/full)</sup>, 2019). If you want to calculate them from a rarefied abundance table (i.e. all the samples have been subsampled to contain the same number of counts per sample, which is the 95% of the minimum number of total counts), you can download the rarefied table from the report.
-
-The report also includes the rarefaction curve per sample which displays the mean of species richness for a subsample of reads (sample size). Generally, this curve initially grows rapidly, as most abundant species are sequenced and they add new taxa in the community, then slightly flattens due to the fact that 'rare' species are more difficult of being sampled, and because of that is more difficult to report an increase in the number of observed species.
-
-> Note: Within each rank, each named taxon is a unique unit. The counts are the number of reads assigned to that taxon. All `Unknown` sequences are considered as a unique taxon
-
-
-
-
 ## Troubleshooting
 
 + If the workflow fails please run it with the demo data set to ensure the workflow itself is working. This will help us determine if the issue is related to the environment, input parameters or a bug.
@@ -376,16 +399,11 @@ The report also includes the rarefaction curve per sample which displays the mea
 
 
 
-## FAQ's
+## FAQs
 
 If your question is not answered here, please report any issues or suggestions on the [github issues](https://github.com/epi2me-labs/wf-16s/issues) page or start a discussion on the [community](https://community.nanoporetech.com/). 
 
 + *Which database is used per default?* - By default, the workflow uses the NCBI 16S + 18S rRNA database. It will be downloaded the first time the workflow is run and re-used in subsequent runs.
-
-+ *Are more databases available?* - Other 16s databases (listed below) can be selected with the `database_set` parameter, but the workflow can also be used with a custom database if required (see [here](https://labs.epi2me.io/how-to-meta-offline/) for details).
-    * 16S, 18S, ITS
-        * ncbi_16s_18s and ncbi_16s_18s_28s_ITS:  Archaeal, bacterial and fungal 16S/18S and ITS data. There are two databases available using the data from [NCBI](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/)
-        * SILVA_138_1: The [SILVA](https://www.arb-silva.de/) database (version 138) is also available. Note that SILVA uses its own set of taxids, which do not match the NCBI taxids. We provide the respective taxdump files, but if you prefer using the NCBI ones, you can create them from the SILVA files ([NCBI](https://www.arb-silva.de/no_cache/download/archive/current/Exports/taxonomy/ncbi/)). As the SILVA database uses genus level, the last taxonomic rank at which the analysis is carried out is genus (`taxonomic_rank G`).
 
 + *How can I use Kraken2 indexes?* - There are different databases available [here](https://benlangmead.github.io/aws-indexes/k2).
 

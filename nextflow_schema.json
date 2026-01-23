@@ -355,7 +355,12 @@
                     "default": 4,
                     "title": "Number of CPU threads per workflow task",
                     "description": "Maximum number of CPU threads to use in each parallel workflow task.",
-                    "help_text": "Several tasks in this workflow benefit from using multiple CPU threads. This option sets the number of CPU threads for all such processes."
+                    "help_text": "Several tasks in this workflow benefit from using multiple CPU threads. This option sets the number of CPU threads for all such processes.",
+                    "overrides": {
+                        "epi2mecloud": {
+                            "hidden": true
+                        }
+                    }
                 }
             }
         },
