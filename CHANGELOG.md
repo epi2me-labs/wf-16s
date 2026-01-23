@@ -5,9 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [v1.6.1]
 ### Added
 - Links to available datasets in the documentation.
+- Greengenes2 database: the database used in the recent ZymoBIOMICS Microbial Communities with 16S dataset blog post is now available as "Greengenes2_plus".
+- Workflow overview diagram in the documentation.
+- Comprehensive database reference table to the README with citations and resource links.
+### Changed
+- Updated to wf-template v5.7.0 to maintain compliance with our latest wf-template standard, changing:
+  - Pipeline overview now appears before pipeline parameters in README.
+  - ezCharts plotting library has been updated to 0.15.1, there are no user facing changes to plots.
+  - Fastcat FASTQ pre-processing program has been updated to 0.24.2, it is more robust to malformed FASTQ input.
+  - CHANGELOG to be compliant with our formatting rules.
+- Bump to wf-metagenomics v2.14.2
+### Fixed
+- Missing ranks when the user-selected taxonomic_rank was deeper than the maximum rank available for a given taxon in the database.
 
 ## [v1.6.0]
 This release of wf-16s updates documentation to include guidance for analysis of ITS amplicons with the SQK-MAB114 kit. Additionally, this version of wf-16s fixes issues with missing files and division by zero, which were triggered when input data coverage was very low. This release removes the real time analysis options to simplify the workflow; new solutions for real time taxonomic classification are in development but users who wish to continue using this functionality will need to pin wf-16s to v1.5.0.
@@ -129,4 +141,4 @@ This release of wf-16s updates documentation to include guidance for analysis of
 - Bump to wf-metagenomics v2.6.0
 
 ## [v0.0.1]
-- First release.
+First release.

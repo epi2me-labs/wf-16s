@@ -42,6 +42,23 @@ In addition, the user can output BAM files in a folder called `bams` by using th
 
 [Kraken2](https://github.com/DerrickWood/kraken2) provides the fastest method for the taxonomic classification of the reads. Then, [Bracken](https://github.com/jenniferlu717/Bracken) is used to provide an estimate of the genus (or the selected taxonomic rank) abundance in the sample.
 
+#### 3.3 Databases
+
+There are different taxonomic databases available, and custom databases can be provided.
+The available databases are:
+
+| Database | Content | References | Taxonomy DB | Pipeline |
+| -------- | ------- | -------------------------- | ----------- | -------- |
+| [ncbi_16s_18s](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/) | Archaeal, bacterial and fungal ribosomal RNA loci (16S rDNA, 18S rDNA (SSU)) | [Resources](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/) | [2025-01-01](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump_archive/)| Kraken2, minimap2 |
+| [ncbi_16s_18s_28s_ITS](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/) | Archaeal, bacterial and fungal  ribosomal RNA loci (16S rDNA, 18S rDNA (SSU), 28S rDNA (LSU) gene and internal transcribed spacer (ITS)) | [Resources](https://www.ncbi.nlm.nih.gov/refseq/targetedloci/) | [2025-01-01](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump_archive/)| Kraken2, minimap2 |
+| [SILVA_138_1](https://www.arb-silva.de/) | aligned small (16S/18S, SSU) ribosomal RNA (rRNA) sequences for Bacteria, Archaea and Eukarya. Version 138.1. As the SILVA database doesn't exceed genus level, the lowest taxonomic rank available for analysis is genus (`taxonomic_rank G`)| [See Citation and License](https://www.arb-silva.de/archive/release_138_1) | SILVA uses its own set of taxids, which do not match the NCBI taxids. The respective taxdump files are provided (database has been made using [kraken2](https://github.com/DerrickWood/kraken2/wiki/Manual#special-databases)), but if NCBI taxids are required, you can create them from the SILVA files ([NCBI](https://www.arb-silva.de/no_cache/download/archive/current/Exports/taxonomy/ncbi/)) | Kraken2, minimap2 |
+| [Greengenes2_plus](https://forum.qiime2.org/t/greengenes2-2024-09/31606) | [Greengenes2 database release 2024.09](https://forum.qiime2.org/t/greengenes2-2024-09/31606), supplemented with *Salmonella enterica* and *Sarcina perfringens* reference sequences from [GTDB release 226](https://gtdb.ecogenomic.org/stats/r226) used in the [ZymoBIOMICS Microbial Communities with 16S dataset blog post](https://epi2me.nanoporetech.com/zymo_16s_2025.09/) | [Greengenes2 Citation](https://greengenes2.ucsd.edu/), [Greengenes2 License](https://ftp.microbio.me/greengenes_release/current/00LICENSE) | Custom taxonomy DB | Kraken2, minimap2 |
+| [Standard-8](https://benlangmead.github.io/aws-indexes/k2) | Refseq archaea, bacteria, viral, plasmid, human1, UniVec_Core capped at 8 GB | [More Information](https://benlangmead.github.io/aws-indexes/k2#older-minikraken-indexes) | [2025-01-01](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump_archive/) | Kraken2 |
+| [PlusPF-8](https://benlangmead.github.io/aws-indexes/k2) | Standard plus Refseq protozoa & fungi capped at 8 GB | [More Information](https://benlangmead.github.io/aws-indexes/k2#older-minikraken-indexes) | [2025-01-01](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump_archive/) | Kraken2 |
+| [PlusPFP-8](https://benlangmead.github.io/aws-indexes/k2) | Standard plus Refseq protozoa, fungi & plant capped at 8 GB | [More Information](https://benlangmead.github.io/aws-indexes/k2#older-minikraken-indexes)| [2025-01-01](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump_archive/)| Kraken2 |
+
+See our [blog post](https://labs.epi2me.io/how-to-meta-offline/) for details on how to build and use a custom database.
+
 ### 4. Output
 
 The main output of the wf-16s pipeline is the `wf-16s-report.html` which can be found in the output directory. It contains a summary of read statistics, the taxonomic composition of the sample and some diversity metrics. The results shown in the report can also be customised with several options. For example, you can use `abundance_threshold` to remove all taxa less prevalent than the threshold from the abundance table. When setting this parameter to a natural number, taxa with fewer absolute counts are removed. You can also pass a decimal between 0.0-1.0 to drop taxa of lower relative abundance. Furthermore, `n_taxa_barplot` controls the number of taxa displayed in the bar plot and groups the rest under the category ‘Other’.
